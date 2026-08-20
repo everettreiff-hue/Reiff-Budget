@@ -72,6 +72,7 @@
     .tab-panel{display:none;}
     .tab-panel.active{display:block;}
     .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;}
     .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
     .mb{margin-bottom:20px;}
 
@@ -107,6 +108,17 @@
     .num-input{text-align:right;font-variant-numeric:tabular-nums;max-width:110px;}
     .sel{background:var(--surface-hover);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font:inherit;font-size:12px;color:var(--text-primary);cursor:pointer;}
     .sel-freq{background:none;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font:inherit;font-size:13px;color:var(--text-primary);cursor:pointer;}
+
+    /* Subscription checkbox */
+    .sub-check{width:15px;height:15px;cursor:pointer;accent-color:var(--cat-4);}
+
+    /* Filter bar */
+    .filter-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 16px;background:var(--surface-hover);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;}
+    .filter-bar input[type="text"]{background:var(--surface-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px;font:inherit;font-size:12px;color:var(--text-primary);width:170px;}
+    .filter-bar input[type="text"]:focus{outline:none;border-color:var(--cat-1);}
+    .filter-label{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary);cursor:pointer;white-space:nowrap;}
+    .filter-badge{display:none;background:var(--cat-1);color:#fff;border-radius:99px;font-size:10px;font-weight:700;padding:2px 8px;letter-spacing:.03em;}
+    .filter-badge.show{display:inline-block;}
 
     /* Buttons */
     .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);font:500 13px/1 inherit;cursor:pointer;border:none;transition:opacity .15s,background .15s;}
@@ -164,8 +176,12 @@
     .toast.show{opacity:1;transform:translateY(0);}
 
     /* Responsive */
+    @media(max-width:900px){
+      .grid-3{grid-template-columns:1fr 1fr;}
+    }
     @media(max-width:720px){
       .grid-4{grid-template-columns:1fr 1fr;}
+      .grid-3{grid-template-columns:1fr;}
       .grid-2{grid-template-columns:1fr;}
       .cc-sum-row{grid-template-columns:1fr 1fr;}
       .content{padding:14px;}
@@ -237,10 +253,14 @@
       </div>
     </div>
 
-    <div class="grid-2">
+    <div class="grid-3">
       <div class="card">
         <div class="card-head"><span class="card-title">Expenses by Category</span><span id="d-cat-src" class="muted" style="font-size:11px;"></span></div>
         <div class="card-body" id="d-cat-chart"><div class="empty"><div class="empty-icon">📊</div>Add expenses in the Budget tab</div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">🔄 Monthly Subscriptions</span><span id="d-sub-total" style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;"></span></div>
+        <div class="card-body" id="d-sub-list"><div class="empty"><div class="empty-icon">🔄</div>Check the 🔄 box on any expense to mark it as a subscription</div></div>
       </div>
       <div class="card">
         <div class="card-head"><span class="card-title">Sinking Funds</span></div>
@@ -268,15 +288,36 @@
       </div>
     </div>
 
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <input type="text" id="exp-search" placeholder="Search expenses…" oninput="setExpFilter()">
+      <select id="exp-cat-filter" class="sel" onchange="setExpFilter()" style="font-size:12px;padding:5px 8px;">
+        <option value="">All Categories</option>
+      </select>
+      <select id="exp-sort" class="sel" onchange="setExpFilter()" style="font-size:12px;padding:5px 8px;">
+        <option value="default">Default Order</option>
+        <option value="name-asc">Name A → Z</option>
+        <option value="name-desc">Name Z → A</option>
+        <option value="amount-desc">Amount High → Low</option>
+        <option value="amount-asc">Amount Low → High</option>
+        <option value="category">By Category</option>
+      </select>
+      <label class="filter-label">
+        <input type="checkbox" id="exp-sub-only" onchange="setExpFilter()" style="accent-color:var(--cat-4);"> 🔄 Subscriptions only
+      </label>
+      <button class="btn btn-ghost btn-sm" onclick="clearExpFilter()">Clear</button>
+      <span class="filter-badge" id="filter-badge">Filtered</span>
+    </div>
+
     <div class="mb">
       <div class="sec-head">
         <div class="sec-title">🏠 Shared Expenses <span style="font-size:12px;font-weight:400;color:var(--text-muted);">— Joint Account</span></div>
       </div>
       <div class="card">
         <table class="tbl">
-          <thead><tr><th>Expense</th><th>Category</th><th style="text-align:right;">Monthly Budget</th><th style="width:36px;"></th></tr></thead>
+          <thead><tr><th>Expense</th><th>Category</th><th style="text-align:center;width:56px;">🔄 Sub</th><th style="text-align:right;">Monthly Budget</th><th style="width:36px;"></th></tr></thead>
           <tbody id="exp-body-shared"></tbody>
-          <tfoot><tr class="tfoot-row"><td colspan="2">Shared Total</td><td style="text-align:right;" id="exp-total-shared">$0</td><td></td></tr></tfoot>
+          <tfoot><tr class="tfoot-row"><td colspan="3">Shared Total</td><td style="text-align:right;" id="exp-total-shared">$0</td><td></td></tr></tfoot>
         </table>
         <button class="btn-add" onclick="addExpense('Shared')">＋ Add shared expense</button>
       </div>
@@ -288,9 +329,9 @@
       </div>
       <div class="card" style="border-color:color-mix(in srgb,var(--cat-2) 25%,var(--border));">
         <table class="tbl">
-          <thead><tr><th>Expense</th><th>Category</th><th style="text-align:right;">Monthly Budget</th><th style="width:36px;"></th></tr></thead>
+          <thead><tr><th>Expense</th><th>Category</th><th style="text-align:center;width:56px;">🔄 Sub</th><th style="text-align:right;">Monthly Budget</th><th style="width:36px;"></th></tr></thead>
           <tbody id="exp-body-everett"></tbody>
-          <tfoot><tr class="tfoot-row"><td colspan="2">Everett Total</td><td style="text-align:right;" id="exp-total-everett">$0</td><td></td></tr></tfoot>
+          <tfoot><tr class="tfoot-row"><td colspan="3">Everett Total</td><td style="text-align:right;" id="exp-total-everett">$0</td><td></td></tr></tfoot>
         </table>
         <button class="btn-add" onclick="addExpense('Everett')" style="color:var(--cat-2);">＋ Add Everett's expense</button>
       </div>
@@ -302,9 +343,9 @@
       </div>
       <div class="card" style="border-color:color-mix(in srgb,var(--cat-3) 25%,var(--border));">
         <table class="tbl">
-          <thead><tr><th>Expense</th><th>Category</th><th style="text-align:right;">Monthly Budget</th><th style="width:36px;"></th></tr></thead>
+          <thead><tr><th>Expense</th><th>Category</th><th style="text-align:center;width:56px;">🔄 Sub</th><th style="text-align:right;">Monthly Budget</th><th style="width:36px;"></th></tr></thead>
           <tbody id="exp-body-rachel"></tbody>
-          <tfoot><tr class="tfoot-row"><td colspan="2">Rachel Total</td><td style="text-align:right;" id="exp-total-rachel">$0</td><td></td></tr></tfoot>
+          <tfoot><tr class="tfoot-row"><td colspan="3">Rachel Total</td><td style="text-align:right;" id="exp-total-rachel">$0</td><td></td></tr></tfoot>
         </table>
         <button class="btn-add" onclick="addExpense('Rachel')" style="color:var(--cat-3);">＋ Add Rachel's expense</button>
       </div>
@@ -319,6 +360,7 @@
             <tr><td style="color:var(--text-secondary);padding-left:20px;">🏠 Shared Expenses</td><td style="text-align:right;" id="bs-shared">$0</td></tr>
             <tr><td style="color:var(--text-secondary);padding-left:20px;">👔 Everett's Expenses</td><td style="text-align:right;" id="bs-everett">$0</td></tr>
             <tr><td style="color:var(--text-secondary);padding-left:20px;">👗 Rachel's Expenses</td><td style="text-align:right;" id="bs-rachel">$0</td></tr>
+            <tr><td style="color:var(--text-secondary);padding-left:20px;">🔄 Subscriptions (included above)</td><td style="text-align:right;font-variant-numeric:tabular-nums;" id="bs-subs">$0</td></tr>
             <tr><td style="color:var(--text-secondary);">Sinking Fund Monthly Target</td><td style="text-align:right;" id="bs-sink">$0</td></tr>
             <tr class="tfoot-row"><td>Net (Income − All Expenses − Sinking)</td><td style="text-align:right;" id="bs-net">$0</td></tr>
           </tbody>
@@ -465,18 +507,18 @@ function blankData(){
       {id:uid(),name:'Rachel Salary',person:'Rachel',amount:0}
     ],
     expenses:[
-      {id:uid(),name:'Mortgage / Rent',category:'Housing',budget:0,bucket:'Shared'},
-      {id:uid(),name:'Electric',category:'Utilities',budget:0,bucket:'Shared'},
-      {id:uid(),name:'Water / Sewer',category:'Utilities',budget:0,bucket:'Shared'},
-      {id:uid(),name:'Internet',category:'Utilities',budget:0,bucket:'Shared'},
-      {id:uid(),name:'Cell Phones',category:'Utilities',budget:0,bucket:'Shared'},
-      {id:uid(),name:'Groceries',category:'Groceries',budget:0,bucket:'Shared'},
-      {id:uid(),name:'Dining Out',category:'Dining Out',budget:0,bucket:'Shared'},
-      {id:uid(),name:'Giving / Tithe',category:'Giving / Charity',budget:0,bucket:'Shared'},
-      {id:uid(),name:'Gas',category:'Transportation',budget:0,bucket:'Everett'},
-      {id:uid(),name:'Car Payment',category:'Transportation',budget:0,bucket:'Everett'},
-      {id:uid(),name:'Health Insurance',category:'Insurance',budget:0,bucket:'Everett'},
-      {id:uid(),name:'Streaming Services',category:'Subscriptions',budget:0,bucket:'Rachel'}
+      {id:uid(),name:'Mortgage / Rent',category:'Housing',budget:0,bucket:'Shared',isSubscription:false},
+      {id:uid(),name:'Electric',category:'Utilities',budget:0,bucket:'Shared',isSubscription:false},
+      {id:uid(),name:'Water / Sewer',category:'Utilities',budget:0,bucket:'Shared',isSubscription:false},
+      {id:uid(),name:'Internet',category:'Utilities',budget:0,bucket:'Shared',isSubscription:true},
+      {id:uid(),name:'Cell Phones',category:'Utilities',budget:0,bucket:'Shared',isSubscription:true},
+      {id:uid(),name:'Groceries',category:'Groceries',budget:0,bucket:'Shared',isSubscription:false},
+      {id:uid(),name:'Dining Out',category:'Dining Out',budget:0,bucket:'Shared',isSubscription:false},
+      {id:uid(),name:'Giving / Tithe',category:'Giving / Charity',budget:0,bucket:'Shared',isSubscription:false},
+      {id:uid(),name:'Gas',category:'Transportation',budget:0,bucket:'Everett',isSubscription:false},
+      {id:uid(),name:'Car Payment',category:'Transportation',budget:0,bucket:'Everett',isSubscription:true},
+      {id:uid(),name:'Health Insurance',category:'Insurance',budget:0,bucket:'Everett',isSubscription:true},
+      {id:uid(),name:'Streaming Services',category:'Subscriptions',budget:0,bucket:'Rachel',isSubscription:true}
     ],
     sinkingFunds:[
       {id:uid(),name:'Car Service / Oil Change',amount:300,months:12},
@@ -492,6 +534,9 @@ let D = blankData();
 let isSaving = false;
 let saveTimer = null;
 let isRemoteUpdate = false;
+
+/* ── Filter state ── */
+let expFilter = {search:'', category:'', sort:'default', subsOnly:false};
 
 /* ── Sync status ── */
 function setSyncStatus(state){
@@ -509,8 +554,8 @@ async function initData(){
       D = snap.data();
       if(!D.months) D.months={};
       if(!D.months[D.currentMonth]) D.months[D.currentMonth]={transactions:[]};
-      // Migration: add bucket to any expense that doesn't have one
-      if(D.expenses) D.expenses=D.expenses.map(e=>e.bucket?e:{...e,bucket:'Shared'});
+      // Migration: add bucket and isSubscription to any expense missing them
+      if(D.expenses) D.expenses=D.expenses.map(e=>({isSubscription:false, bucket:'Shared', ...e}));
     } else {
       D = blankData();
       await DOC.set(D);
@@ -521,7 +566,7 @@ async function initData(){
   }
 
   document.getElementById('loading').classList.add('hidden');
-  applyTheme(); updateHeader(); renderAll();
+  applyTheme(); updateHeader(); populateCatFilter(); renderAll();
 
   // Real-time listener for cross-device sync
   DOC.onSnapshot(snap => {
@@ -532,6 +577,8 @@ async function initData(){
       D=remote;
       if(!D.months) D.months={};
       if(!D.months[D.currentMonth]) D.months[D.currentMonth]={transactions:[]};
+      if(D.expenses) D.expenses=D.expenses.map(e=>({isSubscription:false, bucket:'Shared', ...e}));
+      populateCatFilter();
       renderAll();
       setSyncStatus('saved');
       isRemoteUpdate=false;
@@ -564,6 +611,7 @@ const tot={
   income:()=>D.income.reduce((s,r)=>s+(+r.amount||0),0),
   exp:()=>D.expenses.reduce((s,r)=>s+(+r.budget||0),0),
   sinking:()=>D.sinkingFunds.reduce((s,sf)=>s+sfMo(sf),0),
+  subs:()=>D.expenses.filter(e=>e.isSubscription).reduce((s,e)=>s+(+e.budget||0),0),
   net:()=>tot.income()-tot.exp()-tot.sinking(),
   rate:()=>{const i=tot.income();return i>0?tot.net()/i*100:0;}
 };
@@ -630,7 +678,7 @@ function renderDashboard(){
     if(net>=0)msgEl.innerHTML=`<span class="good-c">${fmt(net)} available after all expenses and sinking funds.</span>`;
     else msgEl.innerHTML=`<span class="bad-c">Over budget by ${fmt(Math.abs(net))} — see recommendations below.</span>`;
   } else msgEl.textContent='';
-  renderCatChart(); renderSinkDash(); renderRecs();
+  renderCatChart(); renderSubsDash(); renderSinkDash(); renderRecs();
 }
 
 function renderCatChart(){
@@ -658,6 +706,37 @@ function renderCatChart(){
       <div style="font-size:10px;color:${over?'var(--critical)':'var(--text-muted)'};text-align:right;margin-top:1px;">${fmt(actual)} actual</div>`:''}
     </div>`;
   }
+  el.innerHTML=html;
+}
+
+function renderSubsDash(){
+  const el=document.getElementById('d-sub-list');
+  const totalEl=document.getElementById('d-sub-total');
+  const subs=D.expenses.filter(e=>e.isSubscription&&(+e.budget||0)>0);
+  const total=tot.subs();
+  totalEl.textContent=total>0?fmt(total)+'/mo':'';
+  if(!subs.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🔄</div>Check the 🔄 box on any expense to mark it as a subscription</div>';
+    return;
+  }
+  const bucketIcon={Shared:'🏠',Everett:'👔',Rachel:'👗'};
+  let html='';
+  for(const e of subs.slice().sort((a,b)=>(+b.budget||0)-(+a.budget||0))){
+    const icon=bucketIcon[e.bucket||'Shared']||'🏠';
+    html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--gridline);">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:13px;">${esc(e.name)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:11px;color:var(--text-muted);white-space:nowrap;">${icon} ${e.bucket||'Shared'}</span>
+        <span style="font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;">${fmt(+e.budget||0)}<span style="font-size:10px;font-weight:400;color:var(--text-muted);">/mo</span></span>
+      </div>
+    </div>`;
+  }
+  html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;">
+    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);">Total</span>
+    <span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;">${fmt(total)}<span style="font-size:11px;font-weight:400;color:var(--text-muted);">/mo</span></span>
+  </div>`;
   el.innerHTML=html;
 }
 
@@ -696,6 +775,12 @@ function renderRecs(){
     if(cat==='Entertainment'&&pct>8)recs.push({t:'warn',i:'🎬',m:`<strong>Entertainment is ${pct.toFixed(0)}% of income (${fmt(val)}/mo).</strong> Trimming to 6% would free <strong>${fmt(val-income*.06)}/mo</strong>.`});
     if(cat==='Subscriptions'&&pct>5)recs.push({t:'warn',i:'📱',m:`<strong>Subscriptions are ${pct.toFixed(0)}% of income (${fmt(val)}/mo).</strong> Audit for any you're not actively using.`});
   }
+  // Subscription-specific insight
+  const subTotal=tot.subs();
+  if(subTotal>0&&income>0){
+    const subPct=subTotal/income*100;
+    if(subPct>10)recs.push({t:'warn',i:'🔄',m:`<strong>Recurring subscriptions total ${fmt(subTotal)}/mo (${subPct.toFixed(0)}% of income).</strong> Review your subscriptions in the Budget tab.`});
+  }
   if(!D.sinkingFunds.length)recs.push({t:'warn',i:'🪣',m:`<strong>No sinking funds set up yet.</strong> Visit the Sinking Funds tab to add car maintenance, home repairs, and annual bills.`});
   if(net>0&&net<500)recs.push({t:'warn',i:'🏦',m:`<strong>${fmt(net)}/mo surplus is a solid start.</strong> A 3–6 month emergency fund would be <strong>${fmtS(exp*3)}–${fmtS(exp*6)}</strong>. Consider auto-transferring to a HYSA.`});
   const ca=catActual();
@@ -705,22 +790,70 @@ function renderRecs(){
   el.innerHTML=recs.map(r=>`<div class="rec ${r.t}"><span class="rec-icon">${r.i}</span><span class="rec-text">${r.m}</span></div>`).join('');
 }
 
+/* ── Filter helpers ── */
+function populateCatFilter(){
+  const sel=document.getElementById('exp-cat-filter');
+  if(!sel) return;
+  const cats=[...new Set(D.expenses.map(e=>e.category))].sort();
+  const cur=sel.value;
+  sel.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${esc(c)}"${c===cur?' selected':''}>${esc(c)}</option>`).join('');
+}
+
+function setExpFilter(){
+  expFilter.search=(document.getElementById('exp-search').value||'').toLowerCase().trim();
+  expFilter.category=document.getElementById('exp-cat-filter').value||'';
+  expFilter.sort=document.getElementById('exp-sort').value||'default';
+  expFilter.subsOnly=document.getElementById('exp-sub-only').checked||false;
+  const hasFilter=expFilter.search||expFilter.category||expFilter.subsOnly||expFilter.sort!=='default';
+  document.getElementById('filter-badge').classList.toggle('show',!!hasFilter);
+  renderBudget();
+}
+
+function clearExpFilter(){
+  expFilter={search:'',category:'',sort:'default',subsOnly:false};
+  document.getElementById('exp-search').value='';
+  document.getElementById('exp-cat-filter').value='';
+  document.getElementById('exp-sort').value='default';
+  document.getElementById('exp-sub-only').checked=false;
+  document.getElementById('filter-badge').classList.remove('show');
+  renderBudget();
+}
+
 /* ── Budget tab ── */
 function expRowHtml(r,i){
   return `<tr>
     <td><input class="bare-input" value="${esc(r.name)}" onchange="updExp(${i},'name',this.value)"></td>
     <td><select class="sel" onchange="updExp(${i},'category',this.value)">${CATEGORIES.map(c=>`<option value="${c}"${r.category===c?' selected':''}>${c}</option>`).join('')}</select></td>
+    <td style="text-align:center;"><input type="checkbox" class="sub-check" ${r.isSubscription?'checked':''} onchange="updExp(${i},'isSubscription',this.checked)" title="Mark as recurring subscription"></td>
     <td style="text-align:right;"><input class="bare-input num-input" type="number" min="0" step="0.01" value="${r.budget||''}" onchange="updExp(${i},'budget',this.value)" placeholder="0.00"></td>
     <td><button class="btn-del" onclick="delExp(${i})">✕</button></td>
   </tr>`;
 }
 
 function renderBucket(bucket,bodyId,totalId){
-  const rows=D.expenses.map((r,i)=>({r,i})).filter(({r})=>(r.bucket||'Shared')===bucket);
+  let rows=D.expenses.map((r,i)=>({r,i})).filter(({r})=>(r.bucket||'Shared')===bucket);
+
+  // Apply filters
+  if(expFilter.search) rows=rows.filter(({r})=>
+    r.name.toLowerCase().includes(expFilter.search)||
+    r.category.toLowerCase().includes(expFilter.search));
+  if(expFilter.category) rows=rows.filter(({r})=>r.category===expFilter.category);
+  if(expFilter.subsOnly) rows=rows.filter(({r})=>r.isSubscription);
+
+  // Apply sort
+  if(expFilter.sort==='name-asc') rows.sort((a,b)=>a.r.name.localeCompare(b.r.name));
+  else if(expFilter.sort==='name-desc') rows.sort((a,b)=>b.r.name.localeCompare(a.r.name));
+  else if(expFilter.sort==='amount-desc') rows.sort((a,b)=>(+b.r.budget||0)-(+a.r.budget||0));
+  else if(expFilter.sort==='amount-asc') rows.sort((a,b)=>(+a.r.budget||0)-(+b.r.budget||0));
+  else if(expFilter.sort==='category') rows.sort((a,b)=>a.r.category.localeCompare(b.r.category));
+
+  const hasFilter=expFilter.search||expFilter.category||expFilter.subsOnly;
   document.getElementById(bodyId).innerHTML=rows.length
     ? rows.map(({r,i})=>expRowHtml(r,i)).join('')
-    : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:14px 0;font-size:12px;">No expenses yet — click ＋ below to add one</td></tr>';
-  const total=rows.reduce((s,{r})=>s+(+r.budget||0),0);
+    : `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:14px 0;font-size:12px;">${hasFilter?'No expenses match the current filter':'No expenses yet — click ＋ below to add one'}</td></tr>`;
+
+  // Total is always the full bucket total (unfiltered), so the summary stays accurate
+  const total=D.expenses.filter(r=>(r.bucket||'Shared')===bucket).reduce((s,r)=>s+(+r.budget||0),0);
   document.getElementById(totalId).textContent=fmt(total);
   return total;
 }
@@ -744,15 +877,23 @@ function renderBudget(){
   document.getElementById('bs-shared').textContent=fmt(sharedTotal);
   document.getElementById('bs-everett').textContent=fmt(everettTotal);
   document.getElementById('bs-rachel').textContent=fmt(rachelTotal);
+  document.getElementById('bs-subs').textContent=fmt(tot.subs());
   document.getElementById('bs-sink').textContent=fmt(sink);
   const netEl=document.getElementById('bs-net');
   netEl.textContent=fmt(net);netEl.style.color=net>=0?'var(--good-text)':'var(--critical)';netEl.style.fontWeight='700';
 }
+
 function updInc(i,f,v){D.income[i][f]=f==='amount'?+v:v;save();}
 function addIncome(){D.income.push({id:uid(),name:'New Income',person:'Everett',amount:0});save();}
 function delInc(i){D.income.splice(i,1);save();}
-function updExp(i,f,v){D.expenses[i][f]=f==='budget'?+v:v;save();}
-function addExpense(bucket){D.expenses.push({id:uid(),name:'New Expense',category:'Other',budget:0,bucket:bucket||'Shared'});save();}
+
+function updExp(i,f,v){
+  if(f==='budget') D.expenses[i][f]=+v;
+  else if(f==='isSubscription') D.expenses[i][f]=!!v;
+  else D.expenses[i][f]=v;
+  save();
+}
+function addExpense(bucket){D.expenses.push({id:uid(),name:'New Expense',category:'Other',budget:0,bucket:bucket||'Shared',isSubscription:false});populateCatFilter();save();}
 function delExp(i){D.expenses.splice(i,1);save();}
 
 /* ── Sinking Funds ── */
