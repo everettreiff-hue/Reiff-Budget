@@ -68,7 +68,7 @@
     .tab.active{color:var(--cat-1);border-bottom-color:var(--cat-1);}
 
     /* Layout */
-    .content{padding:24px;max-width:1160px;margin:0 auto;}
+    .content{padding:24px;max-width:1200px;margin:0 auto;}
     .tab-panel{display:none;}
     .tab-panel.active{display:block;}
     .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
@@ -109,8 +109,9 @@
     .sel{background:var(--surface-hover);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font:inherit;font-size:12px;color:var(--text-primary);cursor:pointer;}
     .sel-freq{background:none;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font:inherit;font-size:13px;color:var(--text-primary);cursor:pointer;}
 
-    /* Subscription checkbox */
+    /* Checkboxes */
     .sub-check{width:15px;height:15px;cursor:pointer;accent-color:var(--cat-4);}
+    .sink-check{width:15px;height:15px;cursor:pointer;accent-color:var(--cat-7);}
 
     /* Filter bar */
     .filter-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 16px;background:var(--surface-hover);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;}
@@ -175,9 +176,50 @@
     .toast{position:fixed;bottom:24px;right:24px;background:var(--text-primary);color:var(--surface-card);padding:10px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;z-index:999;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;}
     .toast.show{opacity:1;transform:translateY(0);}
 
+    /* ── Overall Hero (Budget tab top card) ── */
+    .overall-hero{background:var(--surface-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;display:flex;gap:28px;align-items:flex-start;margin-bottom:20px;}
+    .overall-donut-col{display:flex;flex-direction:column;align-items:center;gap:12px;flex-shrink:0;}
+    .overall-stats-col{flex:1;min-width:0;}
+    .overall-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:14px;}
+    .ostat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+    .ostat{padding:12px 14px;background:var(--surface-hover);border-radius:var(--radius-sm);}
+    .ostat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px;}
+    .ostat-value{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;}
+    .ostat-sub{font-size:10px;color:var(--text-muted);margin-top:3px;}
+    .ostat-net{background:transparent;border:2px solid var(--border);}
+    .donut-legend{display:flex;flex-direction:column;gap:5px;width:180px;}
+    .donut-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;}
+    .donut-swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+
+    /* Performance bars */
+    .perf-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+    .perf-label{font-size:11px;color:var(--text-secondary);width:110px;flex-shrink:0;white-space:nowrap;}
+    .perf-track{flex:1;height:7px;background:var(--surface-hover);border-radius:99px;overflow:hidden;position:relative;}
+    .perf-fill-bg{position:absolute;top:0;left:0;height:100%;border-radius:99px;opacity:.3;}
+    .perf-fill-fg{position:absolute;top:0;left:0;height:100%;border-radius:99px;}
+    .perf-val{font-size:11px;font-variant-numeric:tabular-nums;width:70px;text-align:right;flex-shrink:0;white-space:nowrap;}
+    .perf-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);margin:12px 0 7px;}
+
+    /* Bucket columns */
+    .bucket-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;}
+    .bucket-exp-row td{padding:6px 10px;}
+    .bucket-exp-name{font-size:13px;font-weight:500;}
+    .bucket-exp-meta{display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;}
+    .meta-sel{background:var(--surface-hover);border:1px solid var(--border);border-radius:3px;padding:2px 4px;font:inherit;font-size:10px;color:var(--text-primary);cursor:pointer;max-width:130px;}
+    .flag-label{display:flex;align-items:center;gap:2px;font-size:10px;color:var(--text-muted);cursor:pointer;white-space:nowrap;}
+    .sink-badge{font-size:9px;background:rgba(74,58,167,.12);color:var(--cat-7);border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;}
+
+    /* Additional income section */
+    .addl-inc-section{border-top:1px solid var(--border);padding-top:4px;margin-top:4px;}
+    .addl-inc-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 6px;}
+
     /* Responsive */
+    @media(max-width:1000px){.bucket-cols{grid-template-columns:1fr 1fr;}}
     @media(max-width:900px){
       .grid-3{grid-template-columns:1fr 1fr;}
+      .overall-hero{flex-direction:column;}
+      .overall-donut-col{width:100%;flex-direction:row;justify-content:center;align-items:flex-start;}
+      .donut-legend{width:auto;flex:1;}
     }
     @media(max-width:720px){
       .grid-4{grid-template-columns:1fr 1fr;}
@@ -185,6 +227,8 @@
       .grid-2{grid-template-columns:1fr;}
       .cc-sum-row{grid-template-columns:1fr 1fr;}
       .content{padding:14px;}
+      .bucket-cols{grid-template-columns:1fr;}
+      .ostat-grid{grid-template-columns:1fr 1fr;}
     }
 
     .num{font-variant-numeric:tabular-nums;}
@@ -225,8 +269,7 @@
   <div class="tab active" data-tab="dashboard">📊 Dashboard</div>
   <div class="tab" data-tab="budget">💰 Budget &amp; Income</div>
   <div class="tab" data-tab="sinking">🪣 Sinking Funds</div>
-  <div class="tab" data-tab="cc">🧾 Actual Budget</div>
-  <div class="tab" data-tab="tracker">📈 Budget Tracker</div>
+  <div class="tab" data-tab="cc">💳 Credit Card</div>
 </nav>
 
 <main class="content">
@@ -277,15 +320,65 @@
 
   <!-- ══ BUDGET & INCOME ══ -->
   <div class="tab-panel" id="panel-budget">
+
+    <!-- Overall Hero -->
+    <div class="overall-hero">
+      <div class="overall-donut-col">
+        <div id="oh-donut" style="line-height:0;"></div>
+        <div class="donut-legend" id="oh-legend"></div>
+      </div>
+      <div class="overall-stats-col">
+        <div class="overall-label">📊 Overall Budget — <span id="oh-month-label" style="text-transform:none;font-weight:500;"></span></div>
+        <div class="ostat-grid">
+          <div class="ostat">
+            <div class="ostat-label">Total Income</div>
+            <div class="ostat-value" id="oh-income">$0</div>
+            <div class="ostat-sub" id="oh-addl-sub" style="color:var(--good-text);"></div>
+          </div>
+          <div class="ostat">
+            <div class="ostat-label">Total Expenses</div>
+            <div class="ostat-value" id="oh-expenses">$0</div>
+            <div class="ostat-sub">budgeted monthly</div>
+          </div>
+          <div class="ostat">
+            <div class="ostat-label">Sinking Funds</div>
+            <div class="ostat-value" id="oh-sinking">$0</div>
+            <div class="ostat-sub">set aside monthly</div>
+          </div>
+          <div class="ostat ostat-net">
+            <div class="ostat-label">Net Monthly</div>
+            <div class="ostat-value" id="oh-net" style="font-size:24px;">$0</div>
+            <div class="kpi-badge" id="oh-rate"></div>
+          </div>
+        </div>
+        <div id="perf-section"></div>
+      </div>
+    </div>
+
+    <!-- Income + Additional Income -->
     <div class="mb">
       <div class="sec-head"><div class="sec-title">💵 Income (After Tax)</div></div>
       <div class="card">
         <table class="tbl">
           <thead><tr><th>Source</th><th>Person</th><th style="text-align:right;">Monthly Amount</th><th style="width:36px;"></th></tr></thead>
           <tbody id="inc-body"></tbody>
-          <tfoot><tr class="tfoot-row"><td colspan="2">Total Income</td><td style="text-align:right;" id="inc-total">$0</td><td></td></tr></tfoot>
+          <tfoot><tr class="tfoot-row"><td colspan="2">Fixed Income Total</td><td style="text-align:right;" id="inc-total">$0</td><td></td></tr></tfoot>
         </table>
         <button class="btn-add" onclick="addIncome()">＋ Add income source</button>
+
+        <div class="addl-inc-section">
+          <div class="addl-inc-head">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--text-secondary);">💸 Additional Income This Month</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Odd jobs, side gigs, one-time money — per month</div>
+            </div>
+            <span style="font-size:14px;font-variant-numeric:tabular-nums;font-weight:700;color:var(--good-text);" id="addl-inc-total">$0</span>
+          </div>
+          <table class="tbl">
+            <tbody id="addl-inc-body"></tbody>
+          </table>
+          <button class="btn-add" onclick="addAdditionalIncome()" style="color:var(--good-text);">＋ Add extra income this month</button>
+        </div>
       </div>
     </div>
 
@@ -304,64 +397,67 @@
         <option value="category">By Category</option>
       </select>
       <label class="filter-label">
-        <input type="checkbox" id="exp-sub-only" onchange="setExpFilter()" style="accent-color:var(--cat-4);"> 🔄 Subscriptions only
+        <input type="checkbox" id="exp-sub-only" onchange="setExpFilter()" style="accent-color:var(--cat-4);"> 🔄 Subs only
+      </label>
+      <label class="filter-label">
+        <input type="checkbox" id="exp-sink-only" onchange="setExpFilter()" style="accent-color:var(--cat-7);"> 🪣 Sinking only
       </label>
       <button class="btn btn-ghost btn-sm" onclick="clearExpFilter()">Clear</button>
       <span class="filter-badge" id="filter-badge">Filtered</span>
     </div>
 
-    <div class="mb">
-      <div class="sec-head">
-        <div class="sec-title">🏠 Shared Expenses <span style="font-size:12px;font-weight:400;color:var(--text-muted);">— Joint Account</span></div>
+    <!-- Bucket columns (3-up) -->
+    <div class="bucket-cols">
+      <!-- Shared -->
+      <div>
+        <div class="sec-head"><div class="sec-title">🏠 Shared <span style="font-size:11px;font-weight:400;color:var(--text-muted);">— Joint</span></div></div>
+        <div class="card">
+          <table class="tbl">
+            <thead><tr><th>Expense</th><th style="text-align:right;width:88px;">Budget</th><th style="width:28px;"></th></tr></thead>
+            <tbody id="exp-body-shared"></tbody>
+            <tfoot><tr class="tfoot-row"><td>Shared Total</td><td style="text-align:right;" id="exp-total-shared">$0</td><td></td></tr></tfoot>
+          </table>
+          <button class="btn-add" onclick="addExpense('Shared')">＋ Add shared</button>
+        </div>
       </div>
-      <div class="card">
-        <table class="tbl">
-          <thead><tr><th>Expense</th><th>Category</th><th style="text-align:center;width:56px;">🔄 Sub</th><th style="text-align:right;">Monthly Budget</th><th style="width:36px;"></th></tr></thead>
-          <tbody id="exp-body-shared"></tbody>
-          <tfoot><tr class="tfoot-row"><td colspan="3">Shared Total</td><td style="text-align:right;" id="exp-total-shared">$0</td><td></td></tr></tfoot>
-        </table>
-        <button class="btn-add" onclick="addExpense('Shared')">＋ Add shared expense</button>
-      </div>
-    </div>
-
-    <div class="mb">
-      <div class="sec-head">
-        <div class="sec-title" style="color:var(--cat-2);">👔 Everett's Expenses <span style="font-size:12px;font-weight:400;color:var(--text-muted);">— Everett's Account</span></div>
-      </div>
-      <div class="card" style="border-color:color-mix(in srgb,var(--cat-2) 25%,var(--border));">
-        <table class="tbl">
-          <thead><tr><th>Expense</th><th>Category</th><th style="text-align:center;width:56px;">🔄 Sub</th><th style="text-align:right;">Monthly Budget</th><th style="width:36px;"></th></tr></thead>
+      <!-- Everett -->
+      <div>
+        <div class="sec-head"><div class="sec-title" style="color:var(--cat-2);">👔 Everett <span style="font-size:11px;font-weight:400;color:var(--text-muted);">— Personal</span></div></div>
+        <div class="card" style="border-color:color-mix(in srgb,var(--cat-2) 25%,var(--border));">
+          <table class="tbl">
+            <thead><tr><th>Expense</th><th style="text-align:right;width:88px;">Budget</th><th style="width:28px;"></th></tr></thead>
           <tbody id="exp-body-everett"></tbody>
-          <tfoot><tr class="tfoot-row"><td colspan="3">Everett Total</td><td style="text-align:right;" id="exp-total-everett">$0</td><td></td></tr></tfoot>
-        </table>
-        <button class="btn-add" onclick="addExpense('Everett')" style="color:var(--cat-2);">＋ Add Everett's expense</button>
+          <tfoot><tr class="tfoot-row"><td>Everett Total</td><td style="text-align:right;" id="exp-total-everett">$0</td><td></td></tr></tfoot>
+          </table>
+          <button class="btn-add" onclick="addExpense('Everett')" style="color:var(--cat-2);">＋ Add Everett's</button>
+        </div>
       </div>
-    </div>
-
-    <div class="mb">
-      <div class="sec-head">
-        <div class="sec-title" style="color:var(--cat-3);">👗 Rachel's Expenses <span style="font-size:12px;font-weight:400;color:var(--text-muted);">— Rachel's Account</span></div>
-      </div>
-      <div class="card" style="border-color:color-mix(in srgb,var(--cat-3) 25%,var(--border));">
-        <table class="tbl">
-          <thead><tr><th>Expense</th><th>Category</th><th style="text-align:center;width:56px;">🔄 Sub</th><th style="text-align:right;">Monthly Budget</th><th style="width:36px;"></th></tr></thead>
+      <!-- Rachel -->
+      <div>
+        <div class="sec-head"><div class="sec-title" style="color:var(--cat-3);">👗 Rachel <span style="font-size:11px;font-weight:400;color:var(--text-muted);">— Personal</span></div></div>
+        <div class="card" style="border-color:color-mix(in srgb,var(--cat-3) 25%,var(--border));">
+          <table class="tbl">
+            <thead><tr><th>Expense</th><th style="text-align:right;width:88px;">Budget</th><th style="width:28px;"></th></tr></thead>
           <tbody id="exp-body-rachel"></tbody>
-          <tfoot><tr class="tfoot-row"><td colspan="3">Rachel Total</td><td style="text-align:right;" id="exp-total-rachel">$0</td><td></td></tr></tfoot>
-        </table>
-        <button class="btn-add" onclick="addExpense('Rachel')" style="color:var(--cat-3);">＋ Add Rachel's expense</button>
+          <tfoot><tr class="tfoot-row"><td>Rachel Total</td><td style="text-align:right;" id="exp-total-rachel">$0</td><td></td></tr></tfoot>
+          </table>
+          <button class="btn-add" onclick="addExpense('Rachel')" style="color:var(--cat-3);">＋ Add Rachel's</button>
+        </div>
       </div>
     </div>
 
+    <!-- Summary -->
     <div class="card">
       <div class="card-head"><span class="card-title">Monthly Summary</span></div>
       <div class="card-body" style="padding:0;">
         <table class="tbl">
           <tbody>
-            <tr><td style="color:var(--text-secondary);">Total Income</td><td style="text-align:right;" id="bs-income">$0</td></tr>
+            <tr><td style="color:var(--text-secondary);">Total Income (incl. additional)</td><td style="text-align:right;" id="bs-income">$0</td></tr>
             <tr><td style="color:var(--text-secondary);padding-left:20px;">🏠 Shared Expenses</td><td style="text-align:right;" id="bs-shared">$0</td></tr>
             <tr><td style="color:var(--text-secondary);padding-left:20px;">👔 Everett's Expenses</td><td style="text-align:right;" id="bs-everett">$0</td></tr>
             <tr><td style="color:var(--text-secondary);padding-left:20px;">👗 Rachel's Expenses</td><td style="text-align:right;" id="bs-rachel">$0</td></tr>
             <tr><td style="color:var(--text-secondary);padding-left:20px;">🔄 Subscriptions (included above)</td><td style="text-align:right;font-variant-numeric:tabular-nums;" id="bs-subs">$0</td></tr>
+            <tr><td style="color:var(--text-secondary);padding-left:20px;">🪣 Sinking Fund items (excluded — covered by SF)</td><td style="text-align:right;font-variant-numeric:tabular-nums;" id="bs-sinkexp">$0</td></tr>
             <tr><td style="color:var(--text-secondary);">Sinking Fund Monthly Target</td><td style="text-align:right;" id="bs-sink">$0</td></tr>
             <tr class="tfoot-row"><td>Net (Income − All Expenses − Sinking)</td><td style="text-align:right;" id="bs-net">$0</td></tr>
           </tbody>
@@ -376,7 +472,7 @@
       <strong style="color:var(--text-primary);">💡 How sinking funds work:</strong>
       Enter the estimated cost of a non-monthly expense and how often it occurs.
       The tool calculates how much to set aside each month so you're never caught off guard —
-      separate from your regular savings.
+      separate from your regular savings. Mark expenses in the Budget tab with 🪣 if they're already covered here so they don't double-count.
     </div>
     <div class="card">
       <table class="tbl">
@@ -388,53 +484,13 @@
     </div>
   </div>
 
-  <!-- ══ ACTUAL BUDGET ══ -->
+  <!-- ══ CREDIT CARD ══ -->
   <div class="tab-panel" id="panel-cc">
-    <div class="info-bar">
-      <strong style="color:var(--text-primary);">💡 How this works:</strong>
-      Upload a CSV export for each bucket's card/account, or add items by hand for anything paid by check or straight
-      from the bank. Re-uploading a bucket replaces that bucket's uploaded items only — manual entries and the other
-      buckets are left alone. Once you categorize a vendor, future uploads with that same vendor name are categorized
-      automatically.
-    </div>
-
-    <div class="grid-3">
-      <div class="card">
-        <div class="card-head"><span class="card-title">🏠 Shared</span><span class="muted" id="act-sum-shared" style="font-size:11px;"></span></div>
-        <div class="card-body">
-          <div class="drop-zone" style="padding:22px;" id="drop-zone-shared" onclick="document.getElementById('csv-hidden-shared').click()">
-            <input type="file" id="csv-hidden-shared" accept=".csv" style="display:none;" onchange="handleFile(event,'Shared')">
-            <div class="drop-icon" style="font-size:22px;margin-bottom:6px;">📄</div>
-            <div class="drop-title" style="font-size:13px;">Upload CSV</div>
-            <div class="drop-sub" style="font-size:11px;">Card or bank export · Drag &amp; drop or click</div>
-          </div>
-          <button class="btn-add" style="width:100%;justify-content:center;margin-top:8px;" onclick="addManualTx('Shared')">＋ Add manual expense</button>
-        </div>
-      </div>
-      <div class="card" style="border-color:color-mix(in srgb,var(--cat-2) 25%,var(--border));">
-        <div class="card-head"><span class="card-title" style="color:var(--cat-2);">👔 Everett</span><span class="muted" id="act-sum-everett" style="font-size:11px;"></span></div>
-        <div class="card-body">
-          <div class="drop-zone" style="padding:22px;" id="drop-zone-everett" onclick="document.getElementById('csv-hidden-everett').click()">
-            <input type="file" id="csv-hidden-everett" accept=".csv" style="display:none;" onchange="handleFile(event,'Everett')">
-            <div class="drop-icon" style="font-size:22px;margin-bottom:6px;">📄</div>
-            <div class="drop-title" style="font-size:13px;">Upload CSV</div>
-            <div class="drop-sub" style="font-size:11px;">Card or bank export · Drag &amp; drop or click</div>
-          </div>
-          <button class="btn-add" style="width:100%;justify-content:center;margin-top:8px;color:var(--cat-2);" onclick="addManualTx('Everett')">＋ Add manual expense</button>
-        </div>
-      </div>
-      <div class="card" style="border-color:color-mix(in srgb,var(--cat-3) 25%,var(--border));">
-        <div class="card-head"><span class="card-title" style="color:var(--cat-3);">👗 Rachel</span><span class="muted" id="act-sum-rachel" style="font-size:11px;"></span></div>
-        <div class="card-body">
-          <div class="drop-zone" style="padding:22px;" id="drop-zone-rachel" onclick="document.getElementById('csv-hidden-rachel').click()">
-            <input type="file" id="csv-hidden-rachel" accept=".csv" style="display:none;" onchange="handleFile(event,'Rachel')">
-            <div class="drop-icon" style="font-size:22px;margin-bottom:6px;">📄</div>
-            <div class="drop-title" style="font-size:13px;">Upload CSV</div>
-            <div class="drop-sub" style="font-size:11px;">Card or bank export · Drag &amp; drop or click</div>
-          </div>
-          <button class="btn-add" style="width:100%;justify-content:center;margin-top:8px;color:var(--cat-3);" onclick="addManualTx('Rachel')">＋ Add manual expense</button>
-        </div>
-      </div>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('csv-hidden').click()">
+      <input type="file" id="csv-hidden" accept=".csv" onchange="handleFile(event)">
+      <div class="drop-icon">📄</div>
+      <div class="drop-title">Upload American Express CSV</div>
+      <div class="drop-sub">Drag &amp; drop or click to browse.<br>In Amex: <strong>Statements &amp; Activity → Download → CSV</strong></div>
     </div>
 
     <div id="cc-loaded" style="display:none;">
@@ -454,39 +510,18 @@
         <div class="card-head">
           <span class="card-title">Transactions — <span id="cc-month-label"></span></span>
           <div style="display:flex;gap:8px;align-items:center;">
-            <select id="cc-bucket-filter" class="sel" onchange="renderTxTable()" style="font-size:12px;padding:5px 8px;">
-              <option value="">All Buckets</option>
-              <option value="Shared">🏠 Shared</option>
-              <option value="Everett">👔 Everett</option>
-              <option value="Rachel">👗 Rachel</option>
-            </select>
             <input id="cc-search" type="text" placeholder="Search…" oninput="renderTxTable()"
               style="background:var(--surface-hover);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px;font:inherit;font-size:12px;color:var(--text-primary);width:160px;">
-            <button class="btn btn-ghost btn-sm" onclick="clearCC()">Clear All</button>
+            <button class="btn btn-ghost btn-sm" onclick="clearCC()">Clear</button>
           </div>
         </div>
         <div style="overflow-x:auto;">
           <table class="tbl">
-            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Bucket</th><th style="text-align:center;">Src</th><th style="text-align:right;">Amount</th><th style="width:36px;"></th></tr></thead>
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th style="text-align:right;">Amount</th></tr></thead>
             <tbody id="cc-tbody"></tbody>
           </table>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- ══ BUDGET TRACKER ══ -->
-  <div class="tab-panel" id="panel-tracker">
-    <div class="info-bar">
-      <strong style="color:var(--text-primary);">💡 How this works:</strong>
-      For <strong id="bt-month-label"></strong>, each budgeted category is compared against what's been logged so far
-      in the Actual Budget tab — this updates live as you upload statements or add expenses throughout the month, so
-      you can see progress mid-month, not just at the end.
-    </div>
-    <div id="bt-buckets"></div>
-    <div class="card">
-      <div class="card-head"><span class="card-title">Overall — <span id="bt-month-label-2"></span></span></div>
-      <div class="card-body" id="bt-overall"></div>
     </div>
   </div>
 
@@ -556,28 +591,6 @@ function autoTag(desc) {
   return 'Other';
 }
 
-/* ── Vendor learning ── */
-function normVendor(desc){
-  return (desc||'').toLowerCase()
-    .replace(/\d{4,}/g,'')
-    .replace(/[^a-z0-9 ]/g,' ')
-    .replace(/\s+/g,' ')
-    .trim();
-}
-function learnVendor(desc,cat){
-  const key=normVendor(desc);
-  if(!key) return;
-  if(!D.vendorMap) D.vendorMap={};
-  D.vendorMap[key]=cat;
-}
-function guessCategory(desc,fallbackCat){
-  const key=normVendor(desc);
-  if(D.vendorMap && D.vendorMap[key]) return D.vendorMap[key];
-  const auto=autoTag(desc);
-  if(auto!=='Other') return auto;
-  return fallbackCat||'Other';
-}
-
 /* ── Data ── */
 function uid(){return Math.random().toString(36).slice(2,10);}
 function curMonthKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
@@ -591,18 +604,18 @@ function blankData(){
       {id:uid(),name:'Rachel Salary',person:'Rachel',amount:0}
     ],
     expenses:[
-      {id:uid(),name:'Mortgage / Rent',category:'Housing',budget:0,bucket:'Shared',isSubscription:false},
-      {id:uid(),name:'Electric',category:'Utilities',budget:0,bucket:'Shared',isSubscription:false},
-      {id:uid(),name:'Water / Sewer',category:'Utilities',budget:0,bucket:'Shared',isSubscription:false},
-      {id:uid(),name:'Internet',category:'Utilities',budget:0,bucket:'Shared',isSubscription:true},
-      {id:uid(),name:'Cell Phones',category:'Utilities',budget:0,bucket:'Shared',isSubscription:true},
-      {id:uid(),name:'Groceries',category:'Groceries',budget:0,bucket:'Shared',isSubscription:false},
-      {id:uid(),name:'Dining Out',category:'Dining Out',budget:0,bucket:'Shared',isSubscription:false},
-      {id:uid(),name:'Giving / Tithe',category:'Giving / Charity',budget:0,bucket:'Shared',isSubscription:false},
-      {id:uid(),name:'Gas',category:'Transportation',budget:0,bucket:'Everett',isSubscription:false},
-      {id:uid(),name:'Car Payment',category:'Transportation',budget:0,bucket:'Everett',isSubscription:true},
-      {id:uid(),name:'Health Insurance',category:'Insurance',budget:0,bucket:'Everett',isSubscription:true},
-      {id:uid(),name:'Streaming Services',category:'Subscriptions',budget:0,bucket:'Rachel',isSubscription:true}
+      {id:uid(),name:'Mortgage / Rent',category:'Housing',budget:0,bucket:'Shared',isSubscription:false,isSinkingFund:false},
+      {id:uid(),name:'Electric',category:'Utilities',budget:0,bucket:'Shared',isSubscription:false,isSinkingFund:false},
+      {id:uid(),name:'Water / Sewer',category:'Utilities',budget:0,bucket:'Shared',isSubscription:false,isSinkingFund:false},
+      {id:uid(),name:'Internet',category:'Utilities',budget:0,bucket:'Shared',isSubscription:true,isSinkingFund:false},
+      {id:uid(),name:'Cell Phones',category:'Utilities',budget:0,bucket:'Shared',isSubscription:true,isSinkingFund:false},
+      {id:uid(),name:'Groceries',category:'Groceries',budget:0,bucket:'Shared',isSubscription:false,isSinkingFund:false},
+      {id:uid(),name:'Dining Out',category:'Dining Out',budget:0,bucket:'Shared',isSubscription:false,isSinkingFund:false},
+      {id:uid(),name:'Giving / Tithe',category:'Giving / Charity',budget:0,bucket:'Shared',isSubscription:false,isSinkingFund:false},
+      {id:uid(),name:'Gas',category:'Transportation',budget:0,bucket:'Everett',isSubscription:false,isSinkingFund:false},
+      {id:uid(),name:'Car Payment',category:'Transportation',budget:0,bucket:'Everett',isSubscription:true,isSinkingFund:false},
+      {id:uid(),name:'Health Insurance',category:'Insurance',budget:0,bucket:'Everett',isSubscription:true,isSinkingFund:false},
+      {id:uid(),name:'Streaming Services',category:'Subscriptions',budget:0,bucket:'Rachel',isSubscription:true,isSinkingFund:false}
     ],
     sinkingFunds:[
       {id:uid(),name:'Car Service / Oil Change',amount:300,months:12},
@@ -610,17 +623,8 @@ function blankData(){
       {id:uid(),name:'Car Tires',amount:800,months:48},
       {id:uid(),name:'Annual Subscriptions',amount:200,months:12}
     ],
-    vendorMap:{},
-    months:{[mk]:{transactions:[]}}
+    months:{[mk]:{transactions:[],additionalIncome:[]}}
   };
-}
-
-/* Migrate older records: give every transaction a bucket/source, ensure vendorMap exists */
-function migrateData(){
-  if(!D.vendorMap) D.vendorMap={};
-  if(D.months) for(const m of Object.values(D.months)){
-    if(m.transactions) m.transactions=m.transactions.map(t=>({bucket:'Shared',source:'upload',...t}));
-  }
 }
 
 let D = blankData();
@@ -629,7 +633,7 @@ let saveTimer = null;
 let isRemoteUpdate = false;
 
 /* ── Filter state ── */
-let expFilter = {search:'', category:'', sort:'default', subsOnly:false};
+let expFilter = {search:'', category:'', sort:'default', subsOnly:false, sinkOnly:false};
 
 /* ── Sync status ── */
 function setSyncStatus(state){
@@ -639,6 +643,18 @@ function setSyncStatus(state){
   lbl.textContent = state==='saved'?'Synced':state==='pending'?'Saving…':'Sync error';
 }
 
+/* ── Migration helper ── */
+function migrateData(){
+  // Expenses: add missing fields
+  if(D.expenses) D.expenses=D.expenses.map(e=>({isSubscription:false,isSinkingFund:false,bucket:'Shared',...e}));
+  // Months: add additionalIncome array
+  if(D.months){
+    for(const mk of Object.keys(D.months)){
+      if(!D.months[mk].additionalIncome) D.months[mk].additionalIncome=[];
+    }
+  }
+}
+
 /* ── Firestore load + real-time listener ── */
 async function initData(){
   try {
@@ -646,9 +662,7 @@ async function initData(){
     if(snap.exists){
       D = snap.data();
       if(!D.months) D.months={};
-      if(!D.months[D.currentMonth]) D.months[D.currentMonth]={transactions:[]};
-      // Migration: add bucket and isSubscription to any expense missing them
-      if(D.expenses) D.expenses=D.expenses.map(e=>({isSubscription:false, bucket:'Shared', ...e}));
+      if(!D.months[D.currentMonth]) D.months[D.currentMonth]={transactions:[],additionalIncome:[]};
       migrateData();
     } else {
       D = blankData();
@@ -670,8 +684,7 @@ async function initData(){
       isRemoteUpdate=true;
       D=remote;
       if(!D.months) D.months={};
-      if(!D.months[D.currentMonth]) D.months[D.currentMonth]={transactions:[]};
-      if(D.expenses) D.expenses=D.expenses.map(e=>({isSubscription:false, bucket:'Shared', ...e}));
+      if(!D.months[D.currentMonth]) D.months[D.currentMonth]={transactions:[],additionalIncome:[]};
       migrateData();
       populateCatFilter();
       renderAll();
@@ -703,15 +716,21 @@ async function doSave(){
 
 /* ── Totals ── */
 const tot={
-  income:()=>D.income.reduce((s,r)=>s+(+r.amount||0),0),
-  exp:()=>D.expenses.reduce((s,r)=>s+(+r.budget||0),0),
+  baseIncome:()=>D.income.reduce((s,r)=>s+(+r.amount||0),0),
+  additionalIncome:()=>{
+    const ai=((D.months||{})[D.currentMonth]||{}).additionalIncome||[];
+    return ai.reduce((s,r)=>s+(+r.amount||0),0);
+  },
+  income:()=>tot.baseIncome()+tot.additionalIncome(),
+  exp:()=>D.expenses.filter(e=>!e.isSinkingFund).reduce((s,r)=>s+(+r.budget||0),0),
+  sinkExp:()=>D.expenses.filter(e=>e.isSinkingFund).reduce((s,r)=>s+(+r.budget||0),0),
   sinking:()=>D.sinkingFunds.reduce((s,sf)=>s+sfMo(sf),0),
-  subs:()=>D.expenses.filter(e=>e.isSubscription).reduce((s,e)=>s+(+e.budget||0),0),
+  subs:()=>D.expenses.filter(e=>e.isSubscription&&!e.isSinkingFund).reduce((s,e)=>s+(+e.budget||0),0),
   net:()=>tot.income()-tot.exp()-tot.sinking(),
   rate:()=>{const i=tot.income();return i>0?tot.net()/i*100:0;}
 };
 function sfMo(sf){return(+sf.amount||0)/Math.max(1,+sf.months||12);}
-function catBudget(){const m={};for(const e of D.expenses)m[e.category]=(m[e.category]||0)+(+e.budget||0);return m;}
+function catBudget(){const m={};for(const e of D.expenses.filter(e=>!e.isSinkingFund))m[e.category]=(m[e.category]||0)+(+e.budget||0);return m;}
 function catActual(){
   const txs=((D.months||{})[D.currentMonth]||{transactions:[]}).transactions||[];
   const m={};for(const t of txs)if(t.amount>0)m[t.category]=(m[t.category]||0)+t.amount;return m;
@@ -747,7 +766,7 @@ function shiftMonth(delta){
   const key=`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}`;
   D.currentMonth=key;
   if(!D.months) D.months={};
-  if(!D.months[key]) D.months[key]={transactions:[]};
+  if(!D.months[key]) D.months[key]={transactions:[],additionalIncome:[]};
   save(); updateHeader(); renderAll();
 }
 function updateHeader(){document.getElementById('month-label').textContent=monthLabel(D.currentMonth);}
@@ -807,7 +826,7 @@ function renderCatChart(){
 function renderSubsDash(){
   const el=document.getElementById('d-sub-list');
   const totalEl=document.getElementById('d-sub-total');
-  const subs=D.expenses.filter(e=>e.isSubscription&&(+e.budget||0)>0);
+  const subs=D.expenses.filter(e=>e.isSubscription&&!e.isSinkingFund&&(+e.budget||0)>0);
   const total=tot.subs();
   totalEl.textContent=total>0?fmt(total)+'/mo':'';
   if(!subs.length){
@@ -862,14 +881,16 @@ function renderRecs(){
   else recs.push({t:'bad',i:'🚨',m:`<strong>Over budget by ${fmt(Math.abs(net))}.</strong> Review the categories below and consider where to trim.`});
   if(rate>=20)recs.push({t:'good',i:'🏆',m:`<strong>Excellent ${rate.toFixed(1)}% savings rate.</strong> You're hitting the 20% target financial advisors recommend. Consider directing surplus to investments or your emergency fund.`});
   else if(net>0&&rate<20)recs.push({t:'warn',i:'📈',m:`<strong>Savings rate: ${rate.toFixed(1)}%.</strong> To reach the recommended 20%, save an additional <strong>${fmt(income*.2-net)}/mo</strong>.`});
+  const addlInc=tot.additionalIncome();
+  if(addlInc>0)recs.push({t:'good',i:'💸',m:`<strong>Nice! ${fmt(addlInc)} in extra income this month.</strong> Consider directing it to your emergency fund or a high-yield savings account.`});
   const cb=catBudget();
   for(const[cat,val]of Object.entries(cb).sort((a,b)=>b[1]-a[1])){
     const pct=val/income*100;
     if(cat==='Dining Out'&&pct>8)recs.push({t:'warn',i:'🍽️',m:`<strong>Dining Out is ${pct.toFixed(0)}% of income (${fmt(val)}/mo).</strong> Trimming to 8% would save <strong>${fmt(val-income*.08)}/mo</strong>.`});
+    if(cat==='Housing'&&pct>30)recs.push({t:'warn',i:'🏠',m:`<strong>Housing is ${pct.toFixed(0)}% of income (${fmt(val)}/mo).</strong> Most advisors recommend keeping housing under 28–30%.`});
     if(cat==='Entertainment'&&pct>8)recs.push({t:'warn',i:'🎬',m:`<strong>Entertainment is ${pct.toFixed(0)}% of income (${fmt(val)}/mo).</strong> Trimming to 6% would free <strong>${fmt(val-income*.06)}/mo</strong>.`});
     if(cat==='Subscriptions'&&pct>5)recs.push({t:'warn',i:'📱',m:`<strong>Subscriptions are ${pct.toFixed(0)}% of income (${fmt(val)}/mo).</strong> Audit for any you're not actively using.`});
   }
-  // Subscription-specific insight
   const subTotal=tot.subs();
   if(subTotal>0&&income>0){
     const subPct=subTotal/income*100;
@@ -898,29 +919,42 @@ function setExpFilter(){
   expFilter.category=document.getElementById('exp-cat-filter').value||'';
   expFilter.sort=document.getElementById('exp-sort').value||'default';
   expFilter.subsOnly=document.getElementById('exp-sub-only').checked||false;
-  const hasFilter=expFilter.search||expFilter.category||expFilter.subsOnly||expFilter.sort!=='default';
+  expFilter.sinkOnly=document.getElementById('exp-sink-only').checked||false;
+  const hasFilter=expFilter.search||expFilter.category||expFilter.subsOnly||expFilter.sinkOnly||expFilter.sort!=='default';
   document.getElementById('filter-badge').classList.toggle('show',!!hasFilter);
   renderBudget();
 }
 
 function clearExpFilter(){
-  expFilter={search:'',category:'',sort:'default',subsOnly:false};
+  expFilter={search:'',category:'',sort:'default',subsOnly:false,sinkOnly:false};
   document.getElementById('exp-search').value='';
   document.getElementById('exp-cat-filter').value='';
   document.getElementById('exp-sort').value='default';
   document.getElementById('exp-sub-only').checked=false;
+  document.getElementById('exp-sink-only').checked=false;
   document.getElementById('filter-badge').classList.remove('show');
   renderBudget();
 }
 
-/* ── Budget tab ── */
+/* ── Compact expense row (for bucket columns) ── */
 function expRowHtml(r,i){
-  return `<tr>
-    <td><input class="bare-input" value="${esc(r.name)}" onchange="updExp(${i},'name',this.value)"></td>
-    <td><select class="sel" onchange="updExp(${i},'category',this.value)">${CATEGORIES.map(c=>`<option value="${c}"${r.category===c?' selected':''}>${c}</option>`).join('')}</select></td>
-    <td style="text-align:center;"><input type="checkbox" class="sub-check" ${r.isSubscription?'checked':''} onchange="updExp(${i},'isSubscription',this.checked)" title="Mark as recurring subscription"></td>
-    <td style="text-align:right;"><input class="bare-input num-input" type="number" min="0" step="0.01" value="${r.budget||''}" onchange="updExp(${i},'budget',this.value)" placeholder="0.00"></td>
-    <td><button class="btn-del" onclick="delExp(${i})">✕</button></td>
+  const sinkBadge=r.isSinkingFund?`<span class="sink-badge">🪣 sinking</span>`:'';
+  return `<tr class="bucket-exp-row">
+    <td style="max-width:1px;width:100%;">
+      <div class="bucket-exp-name">${''}<input class="bare-input" style="font-size:13px;font-weight:500;" value="${esc(r.name)}" onchange="updExp(${i},'name',this.value)"></div>
+      <div class="bucket-exp-meta">
+        <select class="meta-sel" onchange="updExp(${i},'category',this.value)">${CATEGORIES.map(c=>`<option value="${c}"${r.category===c?' selected':''}>${c}</option>`).join('')}</select>
+        <label class="flag-label" title="Recurring subscription"><input type="checkbox" class="sub-check" ${r.isSubscription?'checked':''} onchange="updExp(${i},'isSubscription',this.checked)"> 🔄</label>
+        <label class="flag-label" title="Already covered by a sinking fund — won't count against monthly income"><input type="checkbox" class="sink-check" ${r.isSinkingFund?'checked':''} onchange="updExp(${i},'isSinkingFund',this.checked)"> 🪣</label>
+        ${sinkBadge}
+      </div>
+    </td>
+    <td style="text-align:right;width:88px;vertical-align:top;padding-top:11px;">
+      <input class="bare-input num-input" type="number" min="0" step="0.01" value="${r.budget||''}" onchange="updExp(${i},'budget',this.value)" placeholder="0.00" style="max-width:80px;">
+    </td>
+    <td style="width:28px;vertical-align:top;padding-top:9px;">
+      <button class="btn-del" onclick="delExp(${i})">✕</button>
+    </td>
   </tr>`;
 }
 
@@ -933,6 +967,7 @@ function renderBucket(bucket,bodyId,totalId){
     r.category.toLowerCase().includes(expFilter.search));
   if(expFilter.category) rows=rows.filter(({r})=>r.category===expFilter.category);
   if(expFilter.subsOnly) rows=rows.filter(({r})=>r.isSubscription);
+  if(expFilter.sinkOnly) rows=rows.filter(({r})=>r.isSinkingFund);
 
   // Apply sort
   if(expFilter.sort==='name-asc') rows.sort((a,b)=>a.r.name.localeCompare(b.r.name));
@@ -941,18 +976,147 @@ function renderBucket(bucket,bodyId,totalId){
   else if(expFilter.sort==='amount-asc') rows.sort((a,b)=>(+a.r.budget||0)-(+b.r.budget||0));
   else if(expFilter.sort==='category') rows.sort((a,b)=>a.r.category.localeCompare(b.r.category));
 
-  const hasFilter=expFilter.search||expFilter.category||expFilter.subsOnly;
+  const hasFilter=expFilter.search||expFilter.category||expFilter.subsOnly||expFilter.sinkOnly;
   document.getElementById(bodyId).innerHTML=rows.length
     ? rows.map(({r,i})=>expRowHtml(r,i)).join('')
-    : `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:14px 0;font-size:12px;">${hasFilter?'No expenses match the current filter':'No expenses yet — click ＋ below to add one'}</td></tr>`;
+    : `<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:14px 0;font-size:12px;">${hasFilter?'No expenses match the current filter':'No expenses yet — click ＋ below to add one'}</td></tr>`;
 
-  // Total is always the full bucket total (unfiltered), so the summary stays accurate
-  const total=D.expenses.filter(r=>(r.bucket||'Shared')===bucket).reduce((s,r)=>s+(+r.budget||0),0);
+  // Total is always the full bucket total (unfiltered, excluding sinking fund items)
+  const total=D.expenses.filter(r=>(r.bucket||'Shared')===bucket&&!r.isSinkingFund).reduce((s,r)=>s+(+r.budget||0),0);
   document.getElementById(totalId).textContent=fmt(total);
   return total;
 }
 
+/* ── Overall Hero donut chart ── */
+function renderOverallHero(){
+  const income=tot.income(),base=tot.baseIncome(),addl=tot.additionalIncome();
+  const expTotal=tot.exp(),sink=tot.sinking(),net=tot.net(),rate=tot.rate();
+
+  document.getElementById('oh-month-label').textContent=monthLabel(D.currentMonth);
+  document.getElementById('oh-income').textContent=fmt(income);
+  document.getElementById('oh-addl-sub').textContent=addl>0?`+ ${fmt(addl)} extra this month`:'';
+  document.getElementById('oh-expenses').textContent=fmt(expTotal);
+  document.getElementById('oh-sinking').textContent=fmt(sink);
+  const netEl=document.getElementById('oh-net');
+  netEl.textContent=fmt(net);
+  netEl.style.color=net>=0?'var(--good-text)':'var(--critical)';
+  const rateEl=document.getElementById('oh-rate');
+  if(income>0){
+    rateEl.textContent=(net>=0?'▲ ':'▼ ')+Math.abs(rate).toFixed(1)+'% of income';
+    rateEl.className='kpi-badge '+(net>=0?'good':'bad');
+  } else {
+    rateEl.textContent='Enter income to calculate';
+    rateEl.className='kpi-badge';
+  }
+
+  // Build donut slices
+  const sharedVal=D.expenses.filter(e=>(e.bucket||'Shared')==='Shared'&&!e.isSinkingFund).reduce((s,e)=>s+(+e.budget||0),0);
+  const everettVal=D.expenses.filter(e=>e.bucket==='Everett'&&!e.isSinkingFund).reduce((s,e)=>s+(+e.budget||0),0);
+  const rachelVal=D.expenses.filter(e=>e.bucket==='Rachel'&&!e.isSinkingFund).reduce((s,e)=>s+(+e.budget||0),0);
+  const savingsVal=Math.max(net,0);
+
+  const allSlices=[
+    {label:'🏠 Shared',val:sharedVal,color:'#2a78d6'},
+    {label:'👔 Everett',val:everettVal,color:'#eb6834'},
+    {label:'👗 Rachel',val:rachelVal,color:'#1baf7a'},
+    {label:'🪣 Sinking Funds',val:sink,color:'#4a3aa7'},
+    {label:'💰 Savings',val:savingsVal,color:'#0ca30c'},
+  ];
+  const slices=allSlices.filter(s=>s.val>0);
+  const total=slices.reduce((s,sl)=>s+sl.val,0);
+
+  // Draw SVG donut
+  const r=68,cx=90,cy=90,sw=26;
+  const circ=2*Math.PI*r;
+  let paths='',cumul=0;
+  for(const sl of slices){
+    const d=(sl.val/total)*circ;
+    // stroke-dashoffset: circ/4 - cumul rotates start to 12 o'clock
+    const offset=circ/4-cumul;
+    paths+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${sl.color}" stroke-width="${sw}" stroke-dasharray="${d.toFixed(2)} ${(circ-d).toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"/>`;
+    cumul+=d;
+  }
+  const centerText=income>0
+    ?`<text x="${cx}" y="${cy-7}" text-anchor="middle" font-size="10" fill="var(--text-muted)" font-family="system-ui,sans-serif">savings</text><text x="${cx}" y="${cy+11}" text-anchor="middle" font-size="22" font-weight="700" fill="${net>=0?'var(--good-text)':'var(--critical)'}" font-family="system-ui,sans-serif">${Math.abs(rate).toFixed(0)}%</text>`
+    :`<text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="11" fill="var(--text-muted)" font-family="system-ui,sans-serif">no data</text>`;
+
+  const svg=`<svg width="180" height="180" viewBox="0 0 180 180">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border)" stroke-width="${sw}"/>
+    ${total>0?paths:''}
+    ${centerText}
+  </svg>`;
+
+  document.getElementById('oh-donut').innerHTML=svg;
+
+  // Legend
+  const visSlices=total>0?slices:allSlices.filter(s=>s.val>=0).slice(0,4);
+  document.getElementById('oh-legend').innerHTML=slices.map(sl=>`
+    <div class="donut-legend-item">
+      <span class="donut-swatch" style="background:${sl.color};"></span>
+      <span style="color:var(--text-secondary);flex:1;">${sl.label}</span>
+      <span style="font-variant-numeric:tabular-nums;color:var(--text-secondary);">${fmt(sl.val)}</span>
+    </div>`).join('');
+}
+
+/* ── Monthly performance (in overall hero) ── */
+function renderMonthlyPerformance(sharedBudget,everettBudget,rachelBudget){
+  const el=document.getElementById('perf-section');
+  if(!el) return;
+  const income=tot.income(),exp=tot.exp(),sink=tot.sinking();
+  const txs=((D.months||{})[D.currentMonth]||{transactions:[]}).transactions||[];
+  const totalActual=txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const hasActual=totalActual>0;
+
+  if(!income&&!exp&&!sink){el.innerHTML='';return;}
+
+  const maxV=Math.max(income,exp+sink,totalActual,1);
+
+  function perfBar(label,budget,actual,color){
+    const bPct=Math.min(budget/maxV*100,100);
+    const aPct=actual!=null?Math.min(actual/maxV*100,100):0;
+    const over=actual!=null&&actual>budget&&budget>0;
+    const valText=actual!=null
+      ?`<span style="${over?'color:var(--critical);':''}">${fmt(actual)}</span><span style="color:var(--text-muted);font-size:9px;"> / ${fmt(budget)}</span>`
+      :`<span>${fmt(budget)}</span>`;
+    return `<div class="perf-row">
+      <span class="perf-label">${label}</span>
+      <div class="perf-track">
+        <div class="perf-fill-bg" style="width:${bPct}%;background:${color};"></div>
+        ${actual!=null?`<div class="perf-fill-fg" style="width:${aPct}%;background:${over?'var(--critical)':color};"></div>`:''}
+      </div>
+      <span class="perf-val">${valText}</span>
+    </div>`;
+  }
+
+  let html=`<div class="perf-section-title">📅 ${monthLabel(D.currentMonth)} Performance${hasActual?' (actual vs budget)':''}</div>`;
+
+  html+=perfBar('Income',income,null,'var(--good)');
+  html+=perfBar('Expenses + Sinking',exp+sink,hasActual?totalActual:null,'var(--cat-1)');
+
+  if(sharedBudget>0||everettBudget>0||rachelBudget>0){
+    html+=`<div class="perf-section-title" style="margin-top:10px;">By Bucket</div>`;
+    const maxB=Math.max(sharedBudget,everettBudget,rachelBudget,1);
+    function bucketBar(label,val,color){
+      return `<div class="perf-row">
+        <span class="perf-label">${label}</span>
+        <div class="perf-track">
+          <div class="perf-fill-bg" style="width:${Math.min(val/maxB*100,100)}%;background:${color};opacity:.6;"></div>
+          <div class="perf-fill-fg" style="width:${Math.min(val/maxB*100,100)}%;background:${color};opacity:.35;"></div>
+        </div>
+        <span class="perf-val">${fmt(val)}</span>
+      </div>`;
+    }
+    html+=bucketBar('🏠 Shared',sharedBudget,'#2a78d6');
+    html+=bucketBar('👔 Everett',everettBudget,'#eb6834');
+    html+=bucketBar('👗 Rachel',rachelBudget,'#1baf7a');
+  }
+
+  el.innerHTML=html;
+}
+
+/* ── Budget tab ── */
 function renderBudget(){
+  // Income table
   document.getElementById('inc-body').innerHTML=D.income.map((r,i)=>`
     <tr>
       <td><input class="bare-input" value="${esc(r.name)}" onchange="updInc(${i},'name',this.value)"></td>
@@ -960,18 +1124,38 @@ function renderBudget(){
       <td style="text-align:right;"><input class="bare-input num-input" type="number" min="0" step="0.01" value="${r.amount||''}" onchange="updInc(${i},'amount',this.value)" placeholder="0.00"></td>
       <td><button class="btn-del" onclick="delInc(${i})">✕</button></td>
     </tr>`).join('');
-  document.getElementById('inc-total').textContent=fmt(tot.income());
+  document.getElementById('inc-total').textContent=fmt(tot.baseIncome());
 
+  // Additional income for current month
+  const addlInc=((D.months||{})[D.currentMonth]||{}).additionalIncome||[];
+  document.getElementById('addl-inc-body').innerHTML=addlInc.length
+    ? addlInc.map((r,i)=>`<tr>
+        <td><input class="bare-input" value="${esc(r.name)}" onchange="updAdditionalIncome(${i},'name',this.value)" placeholder="e.g. Odd job, freelance, gift"></td>
+        <td style="text-align:right;"><input class="bare-input num-input" type="number" min="0" step="0.01" value="${r.amount||''}" onchange="updAdditionalIncome(${i},'amount',this.value)" placeholder="0.00"></td>
+        <td><button class="btn-del" onclick="delAdditionalIncome(${i})">✕</button></td>
+      </tr>`).join('')
+    : `<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:10px 12px;font-size:12px;">No extra income logged this month</td></tr>`;
+  document.getElementById('addl-inc-total').textContent=fmt(tot.additionalIncome());
+
+  // Buckets
   const sharedTotal=renderBucket('Shared','exp-body-shared','exp-total-shared');
   const everettTotal=renderBucket('Everett','exp-body-everett','exp-total-everett');
   const rachelTotal=renderBucket('Rachel','exp-body-rachel','exp-total-rachel');
 
+  // Overall hero
+  renderOverallHero();
+
+  // Monthly performance
+  renderMonthlyPerformance(sharedTotal,everettTotal,rachelTotal);
+
+  // Summary
   const income=tot.income(),sink=tot.sinking(),net=tot.net();
   document.getElementById('bs-income').textContent=fmt(income);
   document.getElementById('bs-shared').textContent=fmt(sharedTotal);
   document.getElementById('bs-everett').textContent=fmt(everettTotal);
   document.getElementById('bs-rachel').textContent=fmt(rachelTotal);
   document.getElementById('bs-subs').textContent=fmt(tot.subs());
+  document.getElementById('bs-sinkexp').textContent=fmt(tot.sinkExp());
   document.getElementById('bs-sink').textContent=fmt(sink);
   const netEl=document.getElementById('bs-net');
   netEl.textContent=fmt(net);netEl.style.color=net>=0?'var(--good-text)':'var(--critical)';netEl.style.fontWeight='700';
@@ -983,12 +1167,33 @@ function delInc(i){D.income.splice(i,1);save();}
 
 function updExp(i,f,v){
   if(f==='budget') D.expenses[i][f]=+v;
-  else if(f==='isSubscription') D.expenses[i][f]=!!v;
+  else if(f==='isSubscription'||f==='isSinkingFund') D.expenses[i][f]=!!v;
   else D.expenses[i][f]=v;
   save();
 }
-function addExpense(bucket){D.expenses.push({id:uid(),name:'New Expense',category:'Other',budget:0,bucket:bucket||'Shared',isSubscription:false});populateCatFilter();save();}
+function addExpense(bucket){D.expenses.push({id:uid(),name:'New Expense',category:'Other',budget:0,bucket:bucket||'Shared',isSubscription:false,isSinkingFund:false});populateCatFilter();save();}
 function delExp(i){D.expenses.splice(i,1);save();}
+
+/* ── Additional Income (per-month) ── */
+function addAdditionalIncome(){
+  const mk=D.currentMonth;
+  if(!D.months) D.months={};
+  if(!D.months[mk]) D.months[mk]={transactions:[],additionalIncome:[]};
+  if(!D.months[mk].additionalIncome) D.months[mk].additionalIncome=[];
+  D.months[mk].additionalIncome.push({id:uid(),name:'Extra Income',amount:0});
+  save();
+}
+function updAdditionalIncome(i,f,v){
+  const ai=(D.months[D.currentMonth]||{}).additionalIncome;
+  if(!ai) return;
+  ai[i][f]=f==='amount'?+v:v;
+  save();
+}
+function delAdditionalIncome(i){
+  const mk=D.currentMonth;
+  if(D.months[mk]&&D.months[mk].additionalIncome) D.months[mk].additionalIncome.splice(i,1);
+  save();
+}
 
 /* ── Sinking Funds ── */
 function renderSinking(){
@@ -1006,17 +1211,10 @@ function updSF(i,f,v){D.sinkingFunds[i][f]=f==='name'?v:+v;save();}
 function addSF(){D.sinkingFunds.push({id:uid(),name:'New Non-Monthly Expense',amount:0,months:12});save();}
 function delSF(i){D.sinkingFunds.splice(i,1);save();}
 
-/* ── Actual Budget (credit card / manual actuals) ── */
+/* ── Credit Card ── */
 function renderCC(){
   const txs=((D.months||{})[D.currentMonth]||{transactions:[]}).transactions||[];
   document.getElementById('cc-month-label').textContent=monthLabel(D.currentMonth);
-
-  for(const bucket of ['Shared','Everett','Rachel']){
-    const bTx=txs.filter(t=>(t.bucket||'Shared')===bucket&&t.amount>0);
-    const el=document.getElementById('act-sum-'+bucket.toLowerCase());
-    if(el) el.textContent=bTx.length?fmt(bTx.reduce((s,t)=>s+t.amount,0))+' · '+bTx.length+(bTx.length===1?' item':' items'):'No expenses yet';
-  }
-
   if(!txs.length){document.getElementById('cc-loaded').style.display='none';return;}
   document.getElementById('cc-loaded').style.display='block';
   const charges=txs.filter(t=>t.amount>0);
@@ -1079,90 +1277,53 @@ function renderUncat(cb,ca){
   el.innerHTML=html;
 }
 
-const BUCKET_ICON={Shared:'🏠',Everett:'👔',Rachel:'👗'};
-
-function txRowHtml(tx){
-  const color=CAT_COLORS[tx.category]||'#898781',isCredit=tx.amount<0;
-  const bucket=tx.bucket||'Shared';
-  return `<tr>
-    <td><input class="bare-input" style="width:96px;" value="${esc(tx.date)}" onchange="updateTx('${tx._id}','date',this.value)"></td>
-    <td><input class="bare-input" style="min-width:170px;" value="${esc(tx.description)}" onchange="updateTx('${tx._id}','description',this.value)"></td>
-    <td><select class="sel" onchange="updateTx('${tx._id}','category',this.value)" style="border-color:${color}30;background:${color}12;">${CATEGORIES.map(c=>`<option value="${c}"${tx.category===c?' selected':''}>${c}</option>`).join('')}</select></td>
-    <td><select class="sel" onchange="updateTx('${tx._id}','bucket',this.value)">${['Shared','Everett','Rachel'].map(b=>`<option value="${b}"${bucket===b?' selected':''}>${BUCKET_ICON[b]} ${b}</option>`).join('')}</select></td>
-    <td style="text-align:center;font-size:12px;" title="${tx.source==='manual'?'Manually added':'From CSV upload'}">${tx.source==='manual'?'✍️':'📄'}</td>
-    <td style="text-align:right;"><input class="bare-input num-input" type="number" step="0.01" value="${tx.amount}" onchange="updateTx('${tx._id}','amount',this.value)" style="color:${isCredit?'var(--good-text)':'var(--text-primary)'};"></td>
-    <td><button class="btn-del" onclick="delTx('${tx._id}')">✕</button></td>
-  </tr>`;
-}
-
 function renderTxTable(){
   const txs=((D.months||{})[D.currentMonth]||{transactions:[]}).transactions||[];
   const q=(document.getElementById('cc-search')||{}).value||'';
-  const bucketF=(document.getElementById('cc-bucket-filter')||{}).value||'';
   const low=q.toLowerCase();
-  let filtered=txs;
-  if(low) filtered=filtered.filter(t=>t.description.toLowerCase().includes(low)||t.category.toLowerCase().includes(low));
-  if(bucketF) filtered=filtered.filter(t=>(t.bucket||'Shared')===bucketF);
+  const filtered=low?txs.filter(t=>t.description.toLowerCase().includes(low)||t.category.toLowerCase().includes(low)):txs;
   const tbody=document.getElementById('cc-tbody');
-  if(!filtered.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px;">No transactions found</td></tr>';return;}
-  tbody.innerHTML=filtered.map(txRowHtml).join('');
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;">No transactions found</td></tr>';return;}
+  tbody.innerHTML=filtered.map(tx=>{
+    const color=CAT_COLORS[tx.category]||'#898781',isCredit=tx.amount<0;
+    return `<tr>
+      <td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">${esc(tx.date)}</td>
+      <td style="font-size:13px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(tx.description)}">${esc(tx.description)}</td>
+      <td><select class="sel" data-txid="${tx._id}" onchange="updateTxCat(this)" style="border-color:${color}30;background:${color}12;">${CATEGORIES.map(c=>`<option value="${c}"${tx.category===c?' selected':''}>${c}</option>`).join('')}</select></td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;font-size:13px;color:${isCredit?'var(--good-text)':'var(--text-primary)'};">${isCredit?'+ ':' '}${fmt(Math.abs(tx.amount))}</td>
+    </tr>`;
+  }).join('');
 }
 
-function updateTx(id,field,val){
+function updateTxCat(sel){
+  const id=sel.dataset.txid,cat=sel.value;
   const month=(D.months||{})[D.currentMonth];
   if(!month) return;
   const tx=month.transactions.find(t=>t._id===id);
-  if(!tx) return;
-  if(field==='amount') tx.amount=+val;
-  else tx[field]=val;
-  if(field==='category') learnVendor(tx.description,val);
-  if(field==='description'){
-    const guessed=guessCategory(val);
-    if(tx.category==='Other'&&guessed!=='Other') tx.category=guessed;
-  }
-  save(); renderCC();
-}
-
-function delTx(id){
-  const month=(D.months||{})[D.currentMonth];
-  if(!month) return;
-  month.transactions=month.transactions.filter(t=>t._id!==id);
-  save(); renderCC();
-}
-
-function addManualTx(bucket){
-  if(!D.months) D.months={};
-  if(!D.months[D.currentMonth]) D.months[D.currentMonth]={transactions:[]};
-  const today=new Date().toISOString().slice(0,10);
-  D.months[D.currentMonth].transactions.push({_id:uid(),date:today,description:'New expense',amount:0,category:'Other',bucket,source:'manual'});
-  save(); renderCC();
-  toast(`✍️ Added manual expense to ${bucket} — edit it in the table below`);
+  if(tx){tx.category=cat;save();renderCC();}
 }
 
 function clearCC(){
-  if(!confirm('Clear ALL transactions (every bucket, uploaded and manual) for '+monthLabel(D.currentMonth)+'?')) return;
+  if(!confirm('Clear all transactions for '+monthLabel(D.currentMonth)+'?')) return;
   if((D.months||{})[D.currentMonth]) D.months[D.currentMonth].transactions=[];
   save(); renderCC();
 }
 
 /* ── CSV Parsing ── */
-function handleFile(e,bucket){
+function handleFile(e){
   const file=(e.target||{}).files?.[0]||(e.dataTransfer||{}).files?.[0];
   if(!file) return;
   const reader=new FileReader();
   reader.onload=evt=>{
     try{
-      const txs=parseCSV(evt.target.result,bucket);
+      const txs=parseAmex(evt.target.result);
       if(!D.months) D.months={};
-      if(!D.months[D.currentMonth]) D.months[D.currentMonth]={transactions:[]};
-      // Replace only this bucket's previously *uploaded* transactions — keep manual entries and other buckets intact
-      D.months[D.currentMonth].transactions=D.months[D.currentMonth].transactions
-        .filter(t=>!((t.bucket||'Shared')===bucket&&t.source!=='manual'))
-        .concat(txs);
+      if(!D.months[D.currentMonth]) D.months[D.currentMonth]={transactions:[],additionalIncome:[]};
+      D.months[D.currentMonth].transactions=txs;
       save(); renderCC();
-      toast(`✅ Imported ${txs.length} transactions to ${bucket} for ${monthLabel(D.currentMonth)}`);
+      toast(`✅ Imported ${txs.length} transactions for ${monthLabel(D.currentMonth)}`);
     } catch(err){
-      toast('❌ Could not parse CSV — check it has Date, Description and Amount columns');
+      toast('❌ Could not parse CSV — please use an Amex export');
       console.error(err);
     }
   };
@@ -1170,7 +1331,7 @@ function handleFile(e,bucket){
   if(e.target) e.target.value='';
 }
 
-function parseCSV(text,bucket){
+function parseAmex(text){
   const lines=text.trim().split(/\r?\n/);
   if(lines.length<2) throw new Error('Empty');
   let hi=0;
@@ -1189,9 +1350,9 @@ function parseCSV(text,bucket){
     const amount=parseFloat(rawAmt);if(isNaN(amount)) continue;
     const description=clean(cols[descIdx]||'');
     const date=clean(cols[dateIdx]||'');
-    const srcCat=catIdx>=0?clean(cols[catIdx]||''):'';
-    const category=guessCategory(description,mapAmexCat(srcCat));
-    txs.push({_id:uid(),date,description,amount,category,bucket,source:'upload'});
+    const amexCat=catIdx>=0?clean(cols[catIdx]||''):'';
+    const category=autoTag(description)!=='Other'?autoTag(description):mapAmexCat(amexCat);
+    txs.push({_id:uid(),date,description,amount,category});
   }
   return txs.sort((a,b)=>new Date(b.date)-new Date(a.date));
 }
@@ -1222,85 +1383,18 @@ function csvLine(line){
 }
 function clean(s){return String(s||'').replace(/^"|"$/g,'').trim();}
 
-/* ── Drag & drop (per bucket) ── */
-function setupDropZone(id,bucket){
-  const dz=document.getElementById(id);
-  if(!dz) return;
-  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
-  dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
-  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');handleFile(e,bucket);});
-}
-setupDropZone('drop-zone-shared','Shared');
-setupDropZone('drop-zone-everett','Everett');
-setupDropZone('drop-zone-rachel','Rachel');
-
-/* ── Budget Tracker ── */
-function renderTracker(){
-  const ml=monthLabel(D.currentMonth);
-  document.getElementById('bt-month-label').textContent=ml;
-  document.getElementById('bt-month-label-2').textContent=ml;
-  const txs=((D.months||{})[D.currentMonth]||{transactions:[]}).transactions||[];
-  const buckets=['Shared','Everett','Rachel'];
-  let html='',grandBudget=0,grandActual=0;
-
-  for(const bucket of buckets){
-    const cb={};
-    for(const e of D.expenses.filter(e=>(e.bucket||'Shared')===bucket)) cb[e.category]=(cb[e.category]||0)+(+e.budget||0);
-    const ca={};
-    for(const t of txs.filter(t=>(t.bucket||'Shared')===bucket&&t.amount>0)) ca[t.category]=(ca[t.category]||0)+t.amount;
-    const cats=[...new Set([...Object.keys(cb),...Object.keys(ca)])].filter(c=>(cb[c]||0)>0||(ca[c]||0)>0);
-    const bucketBudget=Object.values(cb).reduce((s,v)=>s+v,0);
-    const bucketActual=Object.values(ca).reduce((s,v)=>s+v,0);
-    grandBudget+=bucketBudget; grandActual+=bucketActual;
-
-    html+=`<div class="card mb">
-      <div class="card-head"><span class="card-title">${BUCKET_ICON[bucket]} ${bucket}</span><span class="muted" style="font-size:12px;">${fmt(bucketActual)} of ${fmt(bucketBudget)}</span></div>
-      <div class="card-body">`;
-    if(!cats.length){
-      html+=`<div class="empty">No budgeted categories with activity yet for ${bucket}</div>`;
-    } else {
-      cats.sort((a,b)=>((ca[b]||0)/(cb[b]||1))-((ca[a]||0)/(cb[a]||1)));
-      for(const cat of cats){
-        const budget=cb[cat]||0,actual=ca[cat]||0;
-        const pct=budget>0?actual/budget*100:(actual>0?999:0);
-        const shown=Math.min(pct,100);
-        const color=pct>100?'var(--critical)':pct>=80?'var(--warning)':'var(--good)';
-        const status=budget===0?'No budget set':pct>100?'Over budget':pct>=80?'Near limit':'On track';
-        html+=`<div style="margin-bottom:12px;">
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
-            <span style="display:flex;align-items:center;gap:5px;color:var(--text-secondary);"><span style="width:8px;height:8px;border-radius:2px;background:${CAT_COLORS[cat]||'#898781'};display:inline-block;"></span>${cat}</span>
-            <span style="font-weight:600;">${fmt(actual)} <span class="muted" style="font-weight:400;">/ ${fmt(budget)}</span></span>
-          </div>
-          <div class="track" style="height:8px;"><div class="fill" style="height:8px;width:${shown}%;background:${color};"></div></div>
-          <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:2px;">
-            <span style="color:${color};font-weight:600;">${status}${budget>0?' · '+pct.toFixed(0)+'%':''}</span>
-            <span class="muted">${budget-actual>=0?fmt(budget-actual)+' left':fmt(actual-budget)+' over'}</span>
-          </div>
-        </div>`;
-      }
-    }
-    html+=`</div></div>`;
-  }
-  document.getElementById('bt-buckets').innerHTML=html;
-
-  const overallPct=grandBudget>0?Math.min(grandActual/grandBudget*100,100):0;
-  const overallColor=grandActual>grandBudget?'var(--critical)':(grandActual/Math.max(grandBudget,1)>=.8?'var(--warning)':'var(--good)');
-  document.getElementById('bt-overall').innerHTML=grandBudget||grandActual?`
-    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
-      <span>Total spent this month</span><span style="font-weight:700;">${fmt(grandActual)} <span class="muted" style="font-weight:400;">/ ${fmt(grandBudget)}</span></span>
-    </div>
-    <div class="track"><div class="fill" style="width:${overallPct}%;background:${overallColor};"></div></div>
-    <div style="font-size:12px;margin-top:6px;" class="${grandActual>grandBudget?'bad-c':'good-c'}">
-      ${grandActual>grandBudget?`Over budget by ${fmt(grandActual-grandBudget)} so far this month`:`${fmt(grandBudget-grandActual)} remaining this month`}
-    </div>` : `<div class="empty">Add budgeted expenses and log some actuals to see progress here.</div>`;
-}
+/* ── Drag & drop ── */
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');handleFile(e);});
 
 /* ── Utils ── */
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
 
 function renderAll(){
-  renderDashboard(); renderBudget(); renderSinking(); renderCC(); renderTracker();
+  renderDashboard(); renderBudget(); renderSinking(); renderCC();
 }
 
 /* ── Start ── */
