@@ -216,6 +216,11 @@
     /* Responsive */
     @media(max-width:1000px){.bucket-cols{grid-template-columns:1fr 1fr;}.sum-bucket-grid{grid-template-columns:1fr 1fr;}}
     .sum-bucket-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+    .sum-details{border-top:1px solid var(--border);padding-top:10px;margin-top:12px;}
+    .sum-details>summary{font-size:12px;font-weight:600;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;padding:3px 0;user-select:none;color:var(--cat-1);}
+    .sum-details>summary::-webkit-details-marker{display:none;}
+    .sum-details>summary::before{content:'▶';font-size:9px;display:inline-block;transition:transform .2s;flex-shrink:0;}
+    details[open].sum-details>summary::before{transform:rotate(90deg);}
     @media(max-width:900px){
       .grid-3{grid-template-columns:1fr 1fr;}
       .overall-hero{flex-direction:column;}
@@ -1500,9 +1505,46 @@ function renderSummary(){
       </div>`;
   }
 
+  // ── Helper: render a category breakdown table ──
+  function catBreakdownHtml(cbMap, caMap, accentColor){
+    const cats=Object.entries(cbMap).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+    if(!cats.length) return '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">No expenses budgeted.</div>';
+    const showActual=hasActual&&Object.keys(caMap).length>0;
+    let h=`<table class="tbl" style="font-size:12px;">
+      <thead><tr>
+        <th>Category</th>
+        <th style="text-align:right;width:88px;">Budgeted</th>`;
+    if(showActual) h+=`<th style="text-align:right;width:88px;">Actual</th><th style="text-align:right;width:76px;">Diff</th>`;
+    h+='</tr></thead><tbody>';
+    for(const [cat,bv] of cats){
+      const av=caMap[cat]||0;
+      const diff=av-bv;
+      const dotColor=CAT_COLORS[cat]||'#898781';
+      const diffColor=diff<=0?'var(--good-text)':'var(--critical)';
+      const overMark=showActual&&av>bv&&bv>0?' <span style="font-size:9px;font-weight:700;color:var(--critical);">OVER</span>':'';
+      h+=`<tr>
+        <td style="padding:5px 12px;">
+          <span style="display:inline-flex;align-items:center;gap:5px;">
+            <span style="width:7px;height:7px;border-radius:2px;background:${dotColor};flex-shrink:0;display:inline-block;"></span>
+            ${esc(cat)}${overMark}
+          </span>
+        </td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums;padding:5px 12px;">${fmt(bv)}</td>`;
+      if(showActual){
+        h+=`<td style="text-align:right;font-variant-numeric:tabular-nums;padding:5px 12px;">${av>0?fmt(av):'—'}</td>
+        <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600;padding:5px 12px;color:${av>0?diffColor:'var(--text-muted)'};">${av>0?(diff<0?fmt(diff):('+'+fmt(diff))):'—'}</td>`;
+      }
+      h+='</tr>';
+    }
+    h+='</tbody></table>';
+    return h;
+  }
+
   // Main content card
   const contentEl=document.getElementById('sum-content');
   if(!contentEl) return;
+
+  const cb=catBudget(),ca=catActual();
 
   if(sumView==='overall'){
     if(hasActual){
@@ -1520,7 +1562,7 @@ function renderSummary(){
         const diff=row.actual-row.budget;
         let diffColor='var(--text-muted)',diffText='—';
         if(!row.neutral){
-          if(row.isExp){diffColor=diff<=0?'var(--good-text)':'var(--critical)';diffText=(diff<0?'':'+')+(diff===0?'—':fmt(diff));}
+          if(row.isExp){diffColor=diff<=0?'var(--good-text)':'var(--critical)';diffText=diff===0?'—':(diff<0?fmt(diff):'+'+fmt(diff));}
           else if(row.isNet){diffColor=diff>=0?'var(--good-text)':'var(--critical)';diffText=(diff>=0?'+':'')+fmt(diff);}
         }
         html+=`<tr${row.isNet?' class="tfoot-row"':''}>
@@ -1535,9 +1577,10 @@ function renderSummary(){
       }
       html+='</tbody></table>';
       if(sfSpend>0) html+=`<div style="margin-top:12px;padding:10px 14px;background:rgba(74,58,167,.07);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);">🪣 ${fmt(sfSpend)} in transactions marked as sinking fund — not counted in expenses above.</div>`;
+      html+=`<details class="sum-details"><summary>📊 Category Breakdown (budgeted vs. actual)</summary><div style="margin-top:4px;">${catBreakdownHtml(cb,ca,'var(--cat-1)')}</div></details>`;
       contentEl.innerHTML=html;
     } else {
-      contentEl.innerHTML=`<div style="text-align:center;padding:10px 0 16px;font-size:13px;color:var(--text-muted);">No spending imported yet for ${monthLabel(D.currentMonth)}. Use the Monthly Expenses tab to import your statement and see actuals here.</div>
+      let html=`<div style="text-align:center;padding:10px 0 16px;font-size:13px;color:var(--text-muted);">No spending imported yet for ${monthLabel(D.currentMonth)}. Use the Monthly Expenses tab to import your statement and see actuals here.</div>
       <table class="tbl" style="font-size:14px;">
         <thead><tr><th></th><th style="text-align:right;">Budgeted</th></tr></thead>
         <tbody>
@@ -1547,28 +1590,53 @@ function renderSummary(){
           <tr class="tfoot-row"><td>Expected Left Over</td><td style="text-align:right;font-variant-numeric:tabular-nums;color:${net>=0?'var(--good-text)':'var(--critical)'};">${fmt(net)}</td></tr>
         </tbody>
       </table>`;
+      html+=`<details class="sum-details"><summary>📊 Category Breakdown (budgeted)</summary><div style="margin-top:4px;">${catBreakdownHtml(cb,{},'var(--cat-1)')}</div></details>`;
+      contentEl.innerHTML=html;
     }
   } else {
-    // By bucket view
+    // By bucket view — build category→bucket and actual-by-bucket maps
     const buckets=[
       {name:'Shared',icon:'🏠',color:'#2a78d6'},
       {name:'Everett',icon:'👔',color:'#eb6834'},
       {name:'Rachel',icon:'👗',color:'#1baf7a'},
     ];
+    // Primary bucket for each category (first match wins)
+    const catBucketMap={};
+    for(const e of D.expenses){
+      if(!catBucketMap[e.category]) catBucketMap[e.category]=e.bucket||'Shared';
+    }
+    // Actual spending per bucket × category
+    const bucketActualCat={Shared:{},Everett:{},Rachel:{}};
+    for(const t of txs.filter(t=>t.amount>0&&!t.isSinkingFund)){
+      const bk=catBucketMap[t.category]||'Shared';
+      bucketActualCat[bk][t.category]=(bucketActualCat[bk][t.category]||0)+t.amount;
+    }
     const totalExp=budgeted||1;
     let html='<div class="sum-bucket-grid">';
     for(const b of buckets){
       const bExp=D.expenses.filter(e=>(e.bucket||'Shared')===b.name).reduce((s,e)=>s+(+e.budget||0),0);
       const pct=Math.round(bExp/totalExp*100);
-      html+=`<div style="background:var(--surface-hover);border-radius:var(--radius);padding:22px;border:1px solid color-mix(in srgb,${b.color} 20%,var(--border));">
-        <div style="font-size:28px;margin-bottom:8px;">${b.icon}</div>
-        <div style="font-size:17px;font-weight:700;color:${b.color};margin-bottom:14px;">${b.name}</div>
-        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px;">Budgeted This Month</div>
-        <div style="font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;margin-bottom:4px;">${fmt(bExp)}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">${pct}% of total expenses</div>
-        <div style="height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
+      const bCatBudget={};
+      for(const e of D.expenses.filter(e=>(e.bucket||'Shared')===b.name&&(+e.budget||0)>0)){
+        bCatBudget[e.category]=(bCatBudget[e.category]||0)+(+e.budget||0);
+      }
+      const bCatActual=bucketActualCat[b.name]||{};
+      const bActual=Object.values(bCatActual).reduce((s,v)=>s+v,0);
+      const over=hasActual&&bActual>bExp&&bExp>0;
+      html+=`<div style="background:var(--surface-hover);border-radius:var(--radius);padding:22px;border:1px solid ${over?'var(--critical)':'color-mix(in srgb,'+b.color+' 20%,var(--border))'};overflow:hidden;">
+        <div style="font-size:26px;margin-bottom:6px;">${b.icon}</div>
+        <div style="font-size:17px;font-weight:700;color:${b.color};margin-bottom:12px;">${b.name}</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:3px;">Budgeted</div>
+        <div style="font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;margin-bottom:3px;">${fmt(bExp)}</div>
+        ${hasActual?`<div style="font-size:12px;font-weight:600;margin-bottom:3px;color:${over?'var(--critical)':'var(--good-text)'};">${over?'⚠️ Over by '+fmt(bActual-bExp):'✅ Actual: '+fmt(bActual)}</div>`:''}
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">${pct}% of total expenses</div>
+        <div style="height:5px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:4px;">
           <div style="height:100%;width:${pct}%;background:${b.color};border-radius:99px;"></div>
         </div>
+        <details class="sum-details" style="border-top-color:color-mix(in srgb,${b.color} 25%,var(--border));">
+          <summary style="color:${b.color};">📊 Category Breakdown</summary>
+          <div style="margin-top:4px;margin-left:-22px;margin-right:-22px;">${catBreakdownHtml(bCatBudget,bCatActual,b.color)}</div>
+        </details>
       </div>`;
     }
     html+='</div>';
