@@ -261,17 +261,19 @@
 
 <!-- Tabs -->
 <nav class="tab-bar">
-  <div class="tab active" data-tab="dashboard">📊 Dashboard</div>
+  <div class="tab active" data-tab="summary">📋 Summary</div>
+  <div class="tab" data-tab="dashboard">📊 Dashboard</div>
   <div class="tab" data-tab="budget">💰 Budget &amp; Income</div>
   <div class="tab" data-tab="sinking">🪣 Sinking Funds</div>
-  <div class="tab" data-tab="summary">📋 Summary</div>
   <div class="tab" data-tab="cc">💳 Monthly Expenses</div>
+  <div class="tab" data-tab="rachel">👗 Rachel's View</div>
+  <div class="tab" data-tab="rules">⚡ Auto-Rules</div>
 </nav>
 
 <main class="content">
 
   <!-- ══ DASHBOARD ══ -->
-  <div class="tab-panel active" id="panel-dashboard">
+  <div class="tab-panel" id="panel-dashboard">
     <div class="grid-4">
       <div class="kpi"><div class="kpi-label">Monthly Income</div><div class="kpi-value" id="d-income">$0</div><div class="kpi-sub">After-tax take-home</div></div>
       <div class="kpi"><div class="kpi-label">Monthly Expenses</div><div class="kpi-value" id="d-exp">$0</div><div class="kpi-sub">Budgeted</div></div>
@@ -477,7 +479,8 @@
   </div>
 
   <!-- ══ SUMMARY ══ -->
-  <div class="tab-panel" id="panel-summary">
+  <div class="tab-panel active" id="panel-summary">
+    <div id="sum-variances"></div>
     <div id="sum-status-card" class="mb"></div>
 
     <div class="grid-3 mb" id="sum-kpis"></div>
@@ -499,6 +502,25 @@
   <!-- ══ MONTHLY EXPENSES ══ -->
   <div class="tab-panel" id="panel-cc">
     <div id="cc-inner"></div>
+  </div>
+
+  <!-- ══ RACHEL'S VIEW ══ -->
+  <div class="tab-panel" id="panel-rachel">
+    <div id="rachel-inner"></div>
+  </div>
+
+  <!-- ══ AUTO-RULES ══ -->
+  <div class="tab-panel" id="panel-rules">
+    <div class="card mb">
+      <div class="card-head">
+        <span class="card-title">⚡ Auto-Categorization Rules</span>
+        <button class="btn btn-primary btn-sm" onclick="addAutoRule()">＋ Add Rule</button>
+      </div>
+      <div class="card-body">
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Rules run automatically when you import a CSV. If a transaction description contains the keyword (case-insensitive), it gets assigned that category.</p>
+        <div id="rules-list"></div>
+      </div>
+    </div>
   </div>
 
 </main>
@@ -629,6 +651,8 @@ function migrateData(){
       if(!D.months[mk].additionalIncome) D.months[mk].additionalIncome=[];
     }
   }
+  // Auto-rules
+  if(!D.autoRules) D.autoRules=[];
 }
 
 /* ── Firestore load + real-time listener ── */
@@ -1445,13 +1469,16 @@ function handleFile(e,bucket){
   const reader=new FileReader();
   reader.onload=evt=>{
     try{
-      const txs=parseAmex(evt.target.result).map(t=>({...t,bucket}));
+      const rawTxs=parseAmex(evt.target.result).map(t=>({...t,bucket}));
+      const txs=applyAutoRules(rawTxs);
+      const ruleMatches=txs.filter((t,i)=>t.category!==rawTxs[i].category).length;
       if(!D.months) D.months={};
       if(!D.months[D.currentMonth]) D.months[D.currentMonth]={transactions:[],additionalIncome:[]};
       const others=(D.months[D.currentMonth].transactions||[]).filter(t=>(t.bucket||'Shared')!==bucket);
       D.months[D.currentMonth].transactions=[...others,...txs];
-      save(); renderCC(); renderSummary();
-      toast(`✅ Imported ${txs.length} transactions → ${bucket} (${monthLabel(D.currentMonth)})`);
+      save(); renderCC(); renderSummary(); renderRachelView();
+      const ruleNote=ruleMatches?` · ${ruleMatches} auto-categorized`:'';
+      toast(`✅ Imported ${txs.length} transactions → ${bucket}${ruleNote} (${monthLabel(D.currentMonth)})`);
     } catch(err){
       toast('❌ Could not parse CSV — check the format and try again');
       console.error(err);
@@ -1567,21 +1594,30 @@ function renderSummary(){
       statusBg='rgba(250,178,25,.08)';statusEmoji='⚠️';
     }
   }
+  // Month progress context
+  const now=new Date();
+  const [mY,mM]=D.currentMonth.split('-').map(Number);
+  const daysInMonth=new Date(mY,mM,0).getDate();
+  const isCurrentMonth=(now.getFullYear()===mY&&(now.getMonth()+1)===mM);
+  const dayOfMonth=isCurrentMonth?now.getDate():null;
+  const progressLine=isCurrentMonth
+    ?`<div style="font-size:12px;color:var(--text-muted);margin-top:5px;">${monthLabel(D.currentMonth)} · Day ${dayOfMonth} of ${daysInMonth} (${Math.round(dayOfMonth/daysInMonth*100)}% of month complete)</div>`
+    :`<div style="font-size:12px;color:var(--text-muted);margin-top:5px;">${monthLabel(D.currentMonth)}</div>`;
   sc.innerHTML=`<div style="padding:22px 24px;background:${statusBg};border:1px solid var(--border);border-radius:var(--radius);display:flex;gap:16px;align-items:flex-start;">
     <span style="font-size:32px;line-height:1;">${statusEmoji}</span>
     <div>
       <div style="font-size:16px;line-height:1.5;">${statusMsg}</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-top:5px;">${monthLabel(D.currentMonth)}</div>
+      ${progressLine}
     </div>
   </div>`;
 
-  // KPI tiles
+  // KPI tiles — always 4 tiles
   const kpiEl=document.getElementById('sum-kpis');
   if(kpiEl){
-    const mainVal=hasActual?actualSpend:net;
-    const mainLabel=hasActual?'Actual Spending':'Net After Budget';
-    const mainSub=hasActual?'excl. sinking fund items':'income − expenses − sinking';
-    const mainColor=hasActual?(actualSpend>budgeted?'var(--critical)':'var(--good-text)'):(net>=0?'var(--good-text)':'var(--critical)');
+    const actualSpendColor=hasActual?(actualSpend>budgeted?'var(--critical)':'var(--good-text)'):'var(--text-muted)';
+    const netActual=income-actualSpend;
+    const netActualColor=hasActual?(netActual>=0?'var(--good-text)':'var(--critical)'):'var(--text-muted)';
+    kpiEl.style.gridTemplateColumns='repeat(4,1fr)';
     kpiEl.innerHTML=`
       <div class="kpi">
         <div class="kpi-label">Monthly Income</div>
@@ -1594,9 +1630,14 @@ function renderSummary(){
         <div class="kpi-sub">What we planned to spend</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">${mainLabel}</div>
-        <div class="kpi-value" style="color:${mainColor};">${fmt(mainVal)}</div>
-        <div class="kpi-sub">${mainSub}</div>
+        <div class="kpi-label">Actual Spending</div>
+        <div class="kpi-value" style="color:${actualSpendColor};">${hasActual?fmt(actualSpend):'—'}</div>
+        <div class="kpi-sub">Excl. sinking fund items</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Net Actual</div>
+        <div class="kpi-value" style="color:${netActualColor};">${hasActual?fmt(netActual):'—'}</div>
+        <div class="kpi-sub">Income − actual spending</div>
       </div>`;
   }
 
@@ -1634,6 +1675,49 @@ function renderSummary(){
       </div>`+h;
     }
     return h;
+  }
+
+  // ── Top-3 variances (only when we have actuals) ──
+  const variancesEl=document.getElementById('sum-variances');
+  if(variancesEl){
+    const cb2=catBudget(),ca2=catActual();
+    if(hasActual){
+      const overCats=Object.entries(cb2)
+        .filter(([cat,bv])=>bv>0&&(ca2[cat]||0)>bv)
+        .map(([cat,bv])=>({cat,bv,av:ca2[cat]||0,diff:(ca2[cat]||0)-bv}))
+        .sort((a,b2)=>b2.diff-a.diff)
+        .slice(0,3);
+      if(overCats.length){
+        const dotFor=cat=>CAT_COLORS[cat]||'#898781';
+        variancesEl.innerHTML=`<div style="background:rgba(208,59,59,.05);border:1px solid rgba(208,59,59,.25);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;">
+          <div style="font-size:13px;font-weight:700;color:var(--critical);margin-bottom:12px;">🚨 Biggest Over-Budget Categories</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            ${overCats.map(({cat,bv,av,diff})=>{
+              const healthPct=Math.min(av/bv*100,200);
+              return `<div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="width:8px;height:8px;border-radius:2px;background:${dotFor(cat)};flex-shrink:0;display:inline-block;"></span>
+                    <span style="font-size:13px;font-weight:600;">${esc(cat)}</span>
+                  </div>
+                  <span style="font-size:12px;font-weight:700;color:var(--critical);">+${fmt(diff)} over</span>
+                </div>
+                <div style="height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
+                  <div style="height:100%;width:${Math.min(healthPct,100)}%;background:var(--critical);border-radius:99px;"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-top:3px;">
+                  <span>Budgeted ${fmt(bv)}</span><span>Actual ${fmt(av)}</span>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      } else {
+        variancesEl.innerHTML='';
+      }
+    } else {
+      variancesEl.innerHTML='';
+    }
   }
 
   // Main content card
@@ -1714,15 +1798,34 @@ function renderSummary(){
       const bCatActual=bucketActualCat[b.name]||{};
       const bActual=Object.values(bCatActual).reduce((s,v)=>s+v,0);
       const over=hasActual&&bActual>bExp&&bExp>0;
+      const healthPct=bExp>0?Math.min(Math.round(bActual/bExp*100),200):0;
+      const healthBarWidth=Math.min(healthPct,100);
+      const healthBarColor=over?'var(--critical)':(healthPct>85?'var(--warning)':'var(--good)');
+      const overUnder=bActual-bExp;
       html+=`<div style="background:var(--surface-hover);border-radius:var(--radius);padding:22px;border:1px solid ${over?'var(--critical)':'color-mix(in srgb,'+b.color+' 20%,var(--border))'};overflow:hidden;">
-        <div style="font-size:26px;margin-bottom:6px;">${b.icon}</div>
-        <div style="font-size:17px;font-weight:700;color:${b.color};margin-bottom:12px;">${b.name}</div>
-        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:3px;">Budgeted</div>
-        <div style="font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;margin-bottom:3px;">${fmt(bExp)}</div>
-        ${hasActual?`<div style="font-size:12px;font-weight:600;margin-bottom:3px;color:${over?'var(--critical)':'var(--good-text)'};">${over?'⚠️ Over by '+fmt(bActual-bExp):'✅ Actual: '+fmt(bActual)}</div>`:''}
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">${pct}% of total expenses</div>
-        <div style="height:5px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:4px;">
-          <div style="height:100%;width:${pct}%;background:${b.color};border-radius:99px;"></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <span style="font-size:24px;line-height:1;">${b.icon}</span>
+          <span style="font-size:17px;font-weight:700;color:${b.color};">${b.name}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+          <div style="background:var(--surface-card);border-radius:var(--radius-sm);padding:8px 10px;">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:2px;">Budgeted</div>
+            <div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;">${fmt(bExp)}</div>
+          </div>
+          <div style="background:var(--surface-card);border-radius:var(--radius-sm);padding:8px 10px;">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:2px;">Actual</div>
+            <div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:${hasActual?(over?'var(--critical)':'var(--text-primary)'):'var(--text-muted)'};">${hasActual?fmt(bActual):'—'}</div>
+          </div>
+        </div>
+        ${hasActual?`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:6px 10px;background:${over?'rgba(208,59,59,.08)':'rgba(12,163,12,.06)'};border-radius:var(--radius-sm);">
+          <span style="font-size:12px;font-weight:600;color:${over?'var(--critical)':'var(--good-text)'};">${over?'⚠️ Over budget':'✅ Under budget'}</span>
+          <span style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:${over?'var(--critical)':'var(--good-text)'};">${over?'+':'-'}${fmt(Math.abs(overUnder))}</span>
+        </div>`:''}
+        <div style="margin-bottom:4px;display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);">
+          <span>Budget health</span><span>${hasActual?healthPct+'%':'—'}</span>
+        </div>
+        <div style="height:6px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:12px;">
+          <div style="height:100%;width:${hasActual?healthBarWidth:0}%;background:${healthBarColor};border-radius:99px;transition:width .4s;"></div>
         </div>
         <details class="sum-details" style="border-top-color:color-mix(in srgb,${b.color} 25%,var(--border));">
           <summary style="color:${b.color};">📊 Category Breakdown</summary>
@@ -1735,8 +1838,153 @@ function renderSummary(){
   }
 }
 
+/* ── Rachel's View ── */
+function renderRachelView(){
+  const el=document.getElementById('rachel-inner');
+  if(!el) return;
+  const txs=((D.months||{})[D.currentMonth]||{transactions:[]}).transactions||[];
+  const rTxs=txs.filter(t=>(t.bucket||'Shared')==='Rachel').sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const total=rTxs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const sfTotal=rTxs.filter(t=>t.amount>0&&t.isSinkingFund).reduce((s,t)=>s+t.amount,0);
+  const actual=total-sfTotal;
+  const rBudget=D.expenses.filter(e=>(e.bucket||'Shared')==='Rachel').reduce((s,e)=>s+(+e.budget||0),0);
+  const over=actual>rBudget&&rBudget>0;
+  const healthPct=rBudget>0?Math.min(Math.round(actual/rBudget*100),200):0;
+  const healthBarColor=over?'var(--critical)':(healthPct>85?'var(--warning)':'var(--good)');
+  // Category breakdown for Rachel
+  const rCatActual={};
+  for(const t of rTxs.filter(t=>t.amount>0&&!t.isSinkingFund)){
+    rCatActual[t.category]=(rCatActual[t.category]||0)+t.amount;
+  }
+  const rCatBudget={};
+  for(const e of D.expenses.filter(e=>(e.bucket||'Shared')==='Rachel'&&(+e.budget||0)>0)){
+    rCatBudget[e.category]=(rCatBudget[e.category]||0)+(+e.budget||0);
+  }
+  const hasActual=rTxs.length>0;
+  el.innerHTML=`
+    <div style="max-width:520px;margin:0 auto;">
+      <div class="card mb" style="border-color:color-mix(in srgb,var(--cat-3) 30%,var(--border));">
+        <div class="card-body" style="padding:24px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+            <span style="font-size:28px;">👗</span>
+            <div>
+              <div style="font-size:18px;font-weight:700;color:var(--cat-3);">Rachel's Expenses</div>
+              <div style="font-size:12px;color:var(--text-muted);">${monthLabel(D.currentMonth)}</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+            <div style="background:var(--surface-hover);border-radius:var(--radius-sm);padding:12px 14px;">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:3px;">Budget</div>
+              <div style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;">${fmt(rBudget)}</div>
+            </div>
+            <div style="background:var(--surface-hover);border-radius:var(--radius-sm);padding:12px 14px;">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:3px;">Spent</div>
+              <div style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;color:${hasActual?(over?'var(--critical)':'var(--cat-3)'):'var(--text-muted)'};">${hasActual?fmt(actual):'—'}</div>
+            </div>
+          </div>
+          ${hasActual?`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:8px 12px;background:${over?'rgba(208,59,59,.08)':'rgba(27,175,122,.07)'};border-radius:var(--radius-sm);">
+            <span style="font-size:13px;font-weight:600;color:${over?'var(--critical)':'var(--cat-3)'};">${over?'⚠️ Over budget':'✅ On track'}</span>
+            <span style="font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:${over?'var(--critical)':'var(--cat-3)'};">${over?'+':'-'}${fmt(Math.abs(actual-rBudget))} ${over?'over':'remaining'}</span>
+          </div>`:'<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;padding:8px 0;">No transactions imported yet for this month.</div>'}
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:3px;"><span>Budget health</span><span>${hasActual?healthPct+'%':'—'}</span></div>
+          <div style="height:8px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:20px;">
+            <div style="height:100%;width:${hasActual?Math.min(healthPct,100):0}%;background:${healthBarColor};border-radius:99px;"></div>
+          </div>
+          ${Object.keys(rCatBudget).length>0?`<details class="sum-details" open>
+            <summary style="color:var(--cat-3);font-size:13px;font-weight:600;">📊 By Category</summary>
+            <div style="margin-top:8px;">
+              ${Object.entries(rCatBudget).sort((a,b)=>b[1]-a[1]).map(([cat,bv])=>{
+                const av=rCatActual[cat]||0;
+                const isOver=av>bv&&bv>0;
+                const dot=CAT_COLORS[cat]||'#898781';
+                return `<div style="display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="width:7px;height:7px;border-radius:2px;background:${dot};flex-shrink:0;"></span>
+                    <span style="font-size:12px;">${esc(cat)}</span>
+                    ${isOver?'<span style="font-size:9px;font-weight:700;color:var(--critical);">OVER</span>':''}
+                  </div>
+                  <span style="font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums;">${fmt(bv)}</span>
+                  <span style="font-size:12px;font-variant-numeric:tabular-nums;">${av>0?fmt(av):'—'}</span>
+                  <span style="font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;color:${isOver?'var(--critical)':av>0?'var(--good-text)':'var(--text-muted)'};">${av>0?(av-bv<=0?fmt(av-bv):'+'+fmt(av-bv)):'—'}</span>
+                </div>`;
+              }).join('')}
+            </div>
+          </details>`:''}
+        </div>
+      </div>
+      ${rTxs.length?`<div class="card">
+        <div class="card-head"><span class="card-title">Transactions (${rTxs.length})</span></div>
+        <div class="card-body" style="padding:0 16px;">
+          ${rTxs.map(tx=>{
+            const color=CAT_COLORS[tx.category]||'#898781';
+            return `<div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--gridline);${tx.isSinkingFund?'opacity:.5;':''}">
+              <span style="font-size:11px;color:var(--text-muted);white-space:nowrap;">${esc(tx.date)}</span>
+              <span style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(tx.description)}</span>
+              <span style="font-size:11px;padding:2px 6px;border-radius:99px;background:${color}18;color:${color};white-space:nowrap;">${esc(tx.category)}</span>
+              <span style="font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;">${fmt(tx.amount)}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`:''}
+    </div>`;
+}
+
+/* ── Auto-Categorization Rules ── */
+function renderAutoRules(){
+  const el=document.getElementById('rules-list');
+  if(!el) return;
+  const rules=D.autoRules||[];
+  if(!rules.length){
+    el.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;border:2px dashed var(--border);border-radius:var(--radius-sm);">No rules yet. Click <strong>＋ Add Rule</strong> to create one.</div>`;
+    return;
+  }
+  const catOpts=CATEGORIES.map(c=>`<option value="${c}">${esc(c)}</option>`).join('');
+  el.innerHTML=`<div style="display:flex;flex-direction:column;gap:0;">
+    <div style="display:grid;grid-template-columns:1fr 180px auto;gap:12px;padding:6px 8px;border-bottom:2px solid var(--border);">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Keyword (contains)</span>
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Assign Category</span>
+      <span></span>
+    </div>
+    ${rules.map((r,i)=>`<div style="display:grid;grid-template-columns:1fr 180px auto;gap:12px;align-items:center;padding:8px;border-bottom:1px solid var(--border);">
+      <input value="${esc(r.keyword)}" onchange="updateRule(${i},'keyword',this.value)" style="font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;background:var(--surface-card);color:var(--text-primary);font-family:monospace;">
+      <select onchange="updateRule(${i},'category',this.value)" style="font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;background:var(--surface-card);color:var(--text-primary);">
+        ${CATEGORIES.map(c=>`<option value="${c}"${r.category===c?' selected':''}>${esc(c)}</option>`).join('')}
+      </select>
+      <button onclick="deleteRule(${i})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:14px;padding:4px 6px;" title="Delete rule">✕</button>
+    </div>`).join('')}
+  </div>`;
+}
+function addAutoRule(){
+  if(!D.autoRules) D.autoRules=[];
+  D.autoRules.push({keyword:'',category:CATEGORIES[0]});
+  save(); renderAutoRules();
+}
+function updateRule(i,field,val){
+  if(!D.autoRules||!D.autoRules[i]) return;
+  D.autoRules[i][field]=val;
+  save();
+}
+function deleteRule(i){
+  if(!D.autoRules) return;
+  D.autoRules.splice(i,1);
+  save(); renderAutoRules();
+}
+function applyAutoRules(txs){
+  const rules=(D.autoRules||[]).filter(r=>r.keyword&&r.keyword.trim());
+  if(!rules.length) return txs;
+  return txs.map(tx=>{
+    const desc=(tx.description||'').toLowerCase();
+    for(const r of rules){
+      if(desc.includes(r.keyword.toLowerCase())){
+        return {...tx,category:r.category};
+      }
+    }
+    return tx;
+  });
+}
+
 function renderAll(){
-  renderDashboard(); renderBudget(); renderSinking(); renderCC(); renderSummary();
+  renderDashboard(); renderBudget(); renderSinking(); renderCC(); renderSummary(); renderRachelView(); renderAutoRules();
 }
 
 /* ── Start ── */
