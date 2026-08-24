@@ -380,6 +380,27 @@
       </div>
     </div>
 
+    <!-- Reserve Fund -->
+    <div class="mb">
+      <div class="sec-head"><div class="sec-title">🏦 Reserve Fund</div></div>
+      <div class="card" style="border-color:color-mix(in srgb,var(--cat-7) 30%,var(--border));">
+        <div class="card-body" style="padding:16px 20px;">
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Your annual bonus pool — used to cover sinking-fund tagged expenses throughout the year. Update the balance when the bonus arrives each November.</p>
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;max-width:360px;margin-bottom:16px;">
+            <label style="font-size:13px;font-weight:600;white-space:nowrap;">Current Balance</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:15px;color:var(--text-muted);">$</span>
+              <input id="reserve-balance-input" type="number" min="0" step="100" placeholder="0"
+                style="font-size:15px;font-weight:700;border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;background:var(--surface-hover);color:var(--text-primary);width:140px;font-variant-numeric:tabular-nums;"
+                onchange="setReserveBalance(this.value)" oninput="setReserveBalance(this.value)">
+              <span style="font-size:11px;color:var(--text-muted);">what's in the pool now</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;" id="reserve-stats"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Filter bar -->
     <div class="filter-bar">
       <input type="text" id="exp-search" placeholder="Search expenses…" oninput="setExpFilter()">
@@ -484,6 +505,8 @@
     <div id="sum-status-card" class="mb"></div>
 
     <div class="grid-3 mb" id="sum-kpis"></div>
+
+    <div id="sum-reserve-card" class="mb"></div>
 
     <div class="card">
       <div class="card-head">
@@ -653,6 +676,8 @@ function migrateData(){
   }
   // Auto-rules
   if(!D.autoRules) D.autoRules=[];
+  // Reserve Fund
+  if(D.reserveBalance===undefined) D.reserveBalance=0;
 }
 
 /* ── Firestore load + real-time listener ── */
@@ -1151,6 +1176,7 @@ function renderBudget(){
   document.getElementById('bs-sink').textContent=fmt(sink);
   const netEl=document.getElementById('bs-net');
   netEl.textContent=fmt(net);netEl.style.color=net>=0?'var(--good-text)':'var(--critical)';netEl.style.fontWeight='700';
+  renderReserveFund();
 }
 
 function updInc(i,f,v){D.income[i][f]=f==='amount'?+v:v;save();}
@@ -1836,6 +1862,7 @@ function renderSummary(){
     html+='</div>';
     contentEl.innerHTML=html;
   }
+  renderReserveFund();
 }
 
 /* ── Rachel's View ── */
@@ -1983,8 +2010,94 @@ function applyAutoRules(txs){
   });
 }
 
+/* ── Reserve Fund ── */
+function reserveYearDraws(){
+  // Sum all 🪣-tagged transactions across every month in the current calendar year
+  const year=D.currentMonth.split('-')[0];
+  let draws=0;
+  for(const [mk,mv] of Object.entries(D.months||{})){
+    if(mk.startsWith(year+'–')||mk.startsWith(year+'-')){
+      draws+=(mv.transactions||[]).filter(t=>t.amount>0&&t.isSinkingFund).reduce((s,t)=>s+t.amount,0);
+    }
+  }
+  return draws;
+}
+function setReserveBalance(val){
+  const n=parseFloat(val)||0;
+  D.reserveBalance=n;
+  save();
+  renderReserveFund();
+}
+function renderReserveFund(){
+  // Sync input
+  const inp=document.getElementById('reserve-balance-input');
+  if(inp&&parseFloat(inp.value)!==(D.reserveBalance||0)) inp.value=D.reserveBalance||'';
+  // Stats tiles on Budget tab
+  const statsEl=document.getElementById('reserve-stats');
+  if(statsEl){
+    const draws=reserveYearDraws();
+    const bal=D.reserveBalance||0;
+    const remaining=bal-draws;
+    const pct=bal>0?Math.min(Math.round(draws/bal*100),100):0;
+    const remainColor=remaining<0?'var(--critical)':remaining<bal*0.2?'var(--warning)':'var(--good-text)';
+    statsEl.innerHTML=`
+      <div style="background:var(--surface-hover);border-radius:var(--radius-sm);padding:10px 12px;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:3px;">Balance Set</div>
+        <div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;">${fmt(bal)}</div>
+      </div>
+      <div style="background:var(--surface-hover);border-radius:var(--radius-sm);padding:10px 12px;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:3px;">Drawn This Year 🪣</div>
+        <div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:${draws>0?'var(--critical)':'var(--text-muted)'};">${fmt(draws)}</div>
+      </div>
+      <div style="background:var(--surface-hover);border-radius:var(--radius-sm);padding:10px 12px;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:3px;">Remaining</div>
+        <div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:${remainColor};">${fmt(remaining)}</div>
+      </div>
+      <div style="grid-column:span 3;margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:3px;"><span>Reserve used</span><span>${pct}%</span></div>
+        <div style="height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${pct>80?'var(--critical)':pct>60?'var(--warning)':'var(--cat-7)'};border-radius:99px;transition:width .4s;"></div>
+        </div>
+      </div>`;
+  }
+  // Summary card
+  const sumEl=document.getElementById('sum-reserve-card');
+  if(sumEl){
+    const bal=D.reserveBalance||0;
+    if(!bal){sumEl.innerHTML='';return;}
+    const draws=reserveYearDraws();
+    const remaining=bal-draws;
+    const pct=bal>0?Math.min(Math.round(draws/bal*100),100):0;
+    const remainColor=remaining<0?'var(--critical)':remaining<bal*0.2?'var(--warning)':'var(--good-text)';
+    sumEl.innerHTML=`<div style="background:var(--surface-card);border:1px solid color-mix(in srgb,var(--cat-7) 35%,var(--border));border-radius:var(--radius);padding:16px 20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span style="font-size:13px;font-weight:700;">🏦 Reserve Fund</span>
+        <span style="font-size:11px;color:var(--text-muted);">${D.currentMonth.split('-')[0]} draws</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;">
+        <div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:2px;">Balance</div>
+          <div style="font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;">${fmt(bal)}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:2px;">Drawn 🪣</div>
+          <div style="font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;color:${draws>0?'var(--critical)':'var(--text-muted)'};">${fmt(draws)}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:2px;">Remaining</div>
+          <div style="font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;color:${remainColor};">${fmt(remaining)}</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:3px;"><span>Reserve used</span><span>${pct}%</span></div>
+      <div style="height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${pct>80?'var(--critical)':pct>60?'var(--warning)':'var(--cat-7)'};border-radius:99px;transition:width .4s;"></div>
+      </div>
+    </div>`;
+  }
+}
+
 function renderAll(){
-  renderDashboard(); renderBudget(); renderSinking(); renderCC(); renderSummary(); renderRachelView(); renderAutoRules();
+  renderDashboard(); renderBudget(); renderSinking(); renderCC(); renderSummary(); renderRachelView(); renderAutoRules(); renderReserveFund();
 }
 
 /* ── Start ── */
