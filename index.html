@@ -526,7 +526,7 @@ const CATEGORIES = [
   'Housing','Utilities','Groceries','Dining Out','Transportation',
   'Health & Medical','Insurance','Entertainment','Subscriptions',
   'Personal Care','Kids / Education','Clothing','Giving / Charity',
-  'Pets','Travel','Home & Garden','Other'
+  'Pets','Travel','Home & Garden','Credit Card Late Fees','Other'
 ];
 const CAT_COLORS = {
   'Housing':'#2a78d6','Utilities':'#eda100','Groceries':'#1baf7a',
@@ -534,7 +534,7 @@ const CAT_COLORS = {
   'Insurance':'#4a3aa7','Entertainment':'#008300','Subscriptions':'#898781',
   'Personal Care':'#e87ba4','Kids / Education':'#1baf7a','Clothing':'#eb6834',
   'Giving / Charity':'#008300','Pets':'#eda100','Travel':'#2a78d6',
-  'Home & Garden':'#4a3aa7','Other':'#898781'
+  'Home & Garden':'#4a3aa7','Credit Card Late Fees':'#d03b3b','Other':'#898781'
 };
 const FREQ = [
   {label:'Monthly',months:1},{label:'Every 2 months',months:2},
@@ -1186,6 +1186,15 @@ const CC_BUCKETS=[
   {id:'rachel',label:'👗 Rachel',color:'var(--cat-3)',rgb:'27,175,122',bucket:'Rachel'}
 ];
 let ccLayoutInited=false;
+// Per-bucket category filter: '' means "all"
+const ccCatFilter={Shared:'',Everett:'',Rachel:''};
+function filterBucketCol(bucket){
+  const b=CC_BUCKETS.find(x=>x.bucket===bucket);
+  if(!b) return;
+  const sel=document.getElementById('cc-filter-'+b.id);
+  ccCatFilter[bucket]=sel?sel.value:'';
+  renderBucketColumn(b);
+}
 function initCCLayout(){
   if(ccLayoutInited) return;
   ccLayoutInited=true;
@@ -1214,6 +1223,12 @@ function initCCLayout(){
         </div>
       </div>
       <div style="padding:10px 12px;">
+        <div style="margin-bottom:8px;">
+          <select id="cc-filter-${b.id}" onchange="filterBucketCol('${b.bucket}')" style="width:100%;font-size:12px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;background:var(--surface-hover);color:var(--text-secondary);cursor:pointer;">
+            <option value="">All categories</option>
+            ${CATEGORIES.map(c=>`<option value="${c}">${esc(c)}</option>`).join('')}
+          </select>
+        </div>
         <div id="cc-add-${b.id}" style="display:none;background:var(--surface-hover);border-radius:var(--radius-sm);padding:10px;margin-bottom:10px;">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
             <input id="add-${b.id}-date" type="date" style="font-size:12px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;background:var(--surface-card);color:var(--text-primary);">
@@ -1267,6 +1282,10 @@ function renderBucketColumn(b){
   if(totalEl) totalEl.textContent=fmt(total);
   const actualEl=document.getElementById('cc-actual-'+b.id);
   if(actualEl){actualEl.textContent=fmt(actual);actualEl.style.color=actual>0?'var(--good-text)':'';}
+  // Sync filter select value in case it was rebuilt
+  const activeCat=ccCatFilter[b.bucket]||'';
+  const filterSel=document.getElementById('cc-filter-'+b.id);
+  if(filterSel&&filterSel.value!==activeCat) filterSel.value=activeCat;
   const listEl=document.getElementById('cc-txlist-'+b.id);
   if(!listEl) return;
   if(!bTxs.length){
@@ -1277,8 +1296,17 @@ function renderBucketColumn(b){
     </div>`;
     return;
   }
-  listEl.innerHTML=`<div style="overflow-y:auto;max-height:420px;">
-    ${bTxs.map(tx=>{
+  // Apply category filter
+  const displayTxs=activeCat?bTxs.filter(t=>t.category===activeCat):bTxs;
+  const filterNote=activeCat&&displayTxs.length!==bTxs.length
+    ?`<div style="font-size:11px;color:var(--text-muted);padding:4px 0 6px;text-align:center;">Showing ${displayTxs.length} of ${bTxs.length} transactions · <button onclick="ccCatFilter['${b.bucket}']='';document.getElementById('cc-filter-${b.id}').value='';renderBucketColumn(CC_BUCKETS.find(x=>x.id==='${b.id}'))" style="background:none;border:none;cursor:pointer;color:var(--cat-1);font-size:11px;text-decoration:underline;padding:0;">Clear filter</button></div>`
+    :'';
+  if(activeCat&&!displayTxs.length){
+    listEl.innerHTML=`<div style="text-align:center;padding:20px 10px;color:var(--text-muted);font-size:12px;">No <strong>${esc(activeCat)}</strong> transactions yet.</div>`;
+    return;
+  }
+  listEl.innerHTML=filterNote+`<div style="overflow-y:auto;max-height:420px;">
+    ${displayTxs.map(tx=>{
       const color=CAT_COLORS[tx.category]||'#898781',isCredit=tx.amount<0;
       return `<div style="display:grid;grid-template-columns:auto 1fr auto auto auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--gridline);${tx.isSinkingFund?'opacity:0.52;':''}">
         <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;min-width:60px;">${esc(tx.date)}</span>
