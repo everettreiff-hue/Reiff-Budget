@@ -148,18 +148,8 @@
     .rec-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
     .rec-text{font-size:13px;line-height:1.45;}
 
-    /* Upload */
-    .drop-zone{border:2px dashed var(--border-strong);border-radius:var(--radius);padding:44px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
-    .drop-zone:hover,.drop-zone.over{border-color:var(--cat-1);background:rgba(42,120,214,.04);}
-    .drop-icon{font-size:34px;margin-bottom:12px;}
-    .drop-title{font-size:15px;font-weight:600;margin-bottom:5px;}
-    .drop-sub{font-size:13px;color:var(--text-muted);}
-
-    /* CC summary */
-    .cc-sum-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
-    .cc-sum-tile{background:var(--surface-hover);border-radius:var(--radius-sm);padding:14px;text-align:center;}
-    .cc-sum-label{font-size:11px;color:var(--text-muted);margin-bottom:4px;}
-    .cc-sum-val{font-size:20px;font-weight:700;}
+    /* Bucket column drag-over highlight */
+    .bucket-card-drag{outline:2px dashed var(--cat-1);outline-offset:2px;background:rgba(42,120,214,.03);}
 
     /* Info bar */
     .info-bar{background:rgba(42,120,214,.07);border:1px solid rgba(42,120,214,.18);border-radius:var(--radius);padding:13px 17px;margin-bottom:20px;font-size:13px;color:var(--text-secondary);line-height:1.6;}
@@ -231,7 +221,6 @@
       .grid-4{grid-template-columns:1fr 1fr;}
       .grid-3{grid-template-columns:1fr;}
       .grid-2{grid-template-columns:1fr;}
-      .cc-sum-row{grid-template-columns:1fr 1fr;}
       .content{padding:14px;}
       .bucket-cols{grid-template-columns:1fr;}
       .sum-bucket-grid{grid-template-columns:1fr;}
@@ -243,7 +232,6 @@
     .bad-c{color:var(--critical);}
     .warn-c{color:var(--warning);}
     .muted{color:var(--text-muted);}
-    #csv-hidden{display:none;}
   </style>
 </head>
 <body>
@@ -510,43 +498,7 @@
 
   <!-- ══ MONTHLY EXPENSES ══ -->
   <div class="tab-panel" id="panel-cc">
-    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('csv-hidden').click()">
-      <input type="file" id="csv-hidden" accept=".csv" onchange="handleFile(event)">
-      <div class="drop-icon">📄</div>
-      <div class="drop-title">Upload American Express CSV</div>
-      <div class="drop-sub">Drag &amp; drop or click to browse.<br>In Amex: <strong>Statements &amp; Activity → Download → CSV</strong></div>
-    </div>
-
-    <div id="cc-loaded" style="display:none;">
-      <div class="cc-sum-row" style="margin-top:16px;">
-        <div class="cc-sum-tile"><div class="cc-sum-label">Total Charged</div><div class="cc-sum-val" id="cc-charged">$0</div><div id="cc-sf-note" style="font-size:10px;color:var(--cat-7);margin-top:3px;min-height:14px;"></div></div>
-        <div class="cc-sum-tile"><div class="cc-sum-label">Actual Spending</div><div class="cc-sum-val good-c" id="cc-actual">$0</div><div style="font-size:10px;color:var(--text-muted);margin-top:3px;">excl. sinking fund</div></div>
-        <div class="cc-sum-tile"><div class="cc-sum-label">Categories On Budget</div><div class="cc-sum-val good-c" id="cc-ok">—</div></div>
-        <div class="cc-sum-tile"><div class="cc-sum-label">Categories Over Budget</div><div class="cc-sum-val bad-c" id="cc-over">—</div></div>
-      </div>
-
-      <div class="grid-2">
-        <div class="card"><div class="card-head"><span class="card-title">Budget vs. Actual</span></div><div class="card-body" id="cc-bva"></div></div>
-        <div class="card"><div class="card-head"><span class="card-title">Spending Without a Budget</span></div><div class="card-body" id="cc-uncat"></div></div>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <span class="card-title">Transactions — <span id="cc-month-label"></span></span>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input id="cc-search" type="text" placeholder="Search…" oninput="renderTxTable()"
-              style="background:var(--surface-hover);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px;font:inherit;font-size:12px;color:var(--text-primary);width:160px;">
-            <button class="btn btn-ghost btn-sm" onclick="clearCC()">Clear</button>
-          </div>
-        </div>
-        <div style="overflow-x:auto;">
-          <table class="tbl">
-            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th style="text-align:right;">Amount</th><th style="width:36px;text-align:center;" title="Mark as covered by sinking fund">🪣</th></tr></thead>
-            <tbody id="cc-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <div id="cc-inner"></div>
   </div>
 
 </main>
@@ -1227,26 +1179,168 @@ function updSF(i,f,v){D.sinkingFunds[i][f]=f==='name'?v:+v;save();}
 function addSF(){D.sinkingFunds.push({id:uid(),name:'New Non-Monthly Expense',amount:0,months:12});save();}
 function delSF(i){D.sinkingFunds.splice(i,1);save();}
 
-/* ── Credit Card ── */
+/* ── Monthly Expenses (per-bucket) ── */
+const CC_BUCKETS=[
+  {id:'shared',label:'🏠 Shared',color:'var(--cat-1)',rgb:'42,120,214',bucket:'Shared'},
+  {id:'everett',label:'👔 Everett',color:'var(--cat-2)',rgb:'235,104,52',bucket:'Everett'},
+  {id:'rachel',label:'👗 Rachel',color:'var(--cat-3)',rgb:'27,175,122',bucket:'Rachel'}
+];
+let ccLayoutInited=false;
+function initCCLayout(){
+  if(ccLayoutInited) return;
+  ccLayoutInited=true;
+  const catOpts=CATEGORIES.map(c=>`<option value="${c}">${esc(c)}</option>`).join('');
+  const colHtml=b=>`
+    <div class="card" id="cc-col-${b.id}" style="cursor:default;">
+      <div class="card-head" style="border-bottom-color:rgba(${b.rgb},.18);">
+        <span style="font-size:13px;font-weight:700;color:${b.color};">${b.label}</span>
+        <div style="display:flex;gap:5px;align-items:center;">
+          <input type="file" id="csv-${b.id}" accept=".csv" onchange="handleFile(event,'${b.bucket}')" style="display:none;">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('csv-${b.id}').click()" title="Import CSV">📄 CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleManualAdd('${b.bucket}')" title="Add expense manually">＋ Add</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearBucketTxs('${b.bucket}')" title="Clear ${b.bucket} transactions" style="color:var(--text-muted);font-size:11px;">✕ Clear</button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:12px;">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <div style="flex:1;background:var(--surface-hover);border-radius:var(--radius-sm);padding:8px;text-align:center;">
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Total Charged</div>
+            <div id="cc-total-${b.id}" style="font-size:16px;font-weight:700;">$0</div>
+          </div>
+          <div style="flex:1;background:var(--surface-hover);border-radius:var(--radius-sm);padding:8px;text-align:center;">
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Actual Spending</div>
+            <div id="cc-actual-${b.id}" style="font-size:16px;font-weight:700;color:var(--good-text);">$0</div>
+          </div>
+        </div>
+        <div id="cc-add-${b.id}" style="display:none;background:var(--surface-hover);border-radius:var(--radius-sm);padding:10px;margin-bottom:10px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+            <input id="add-${b.id}-date" type="date" style="font-size:12px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;background:var(--surface-card);color:var(--text-primary);">
+            <select id="add-${b.id}-cat" style="font-size:12px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 6px;background:var(--surface-card);color:var(--text-primary);">${catOpts}</select>
+            <input id="add-${b.id}-desc" type="text" placeholder="Description" style="font-size:12px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;background:var(--surface-card);color:var(--text-primary);grid-column:span 2;">
+            <input id="add-${b.id}-amt" type="number" placeholder="Amount (e.g. 45.00)" min="0" step="0.01" style="font-size:12px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;background:var(--surface-card);color:var(--text-primary);grid-column:span 2;">
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;">
+            <button class="btn btn-ghost btn-sm" onclick="cancelManualTx('${b.bucket}')">Cancel</button>
+            <button class="btn btn-primary btn-sm" onclick="saveManualTx('${b.bucket}')">Add</button>
+          </div>
+        </div>
+        <div id="cc-txlist-${b.id}"></div>
+      </div>
+    </div>`;
+  document.getElementById('cc-inner').innerHTML=`
+    <div class="bucket-cols" style="align-items:start;">
+      ${CC_BUCKETS.map(colHtml).join('')}
+    </div>
+    <div class="grid-2" id="cc-analytics" style="display:none;">
+      <div class="card"><div class="card-head"><span class="card-title">Budget vs. Actual</span></div><div class="card-body" id="cc-bva"></div></div>
+      <div class="card"><div class="card-head"><span class="card-title">Spending Without a Budget</span></div><div class="card-body" id="cc-uncat"></div></div>
+    </div>`;
+  CC_BUCKETS.forEach(b=>{
+    const col=document.getElementById('cc-col-'+b.id);
+    if(!col) return;
+    col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('bucket-card-drag');});
+    col.addEventListener('dragleave',e=>{if(!col.contains(e.relatedTarget))col.classList.remove('bucket-card-drag');});
+    col.addEventListener('drop',e=>{e.preventDefault();col.classList.remove('bucket-card-drag');handleFile(e,b.bucket);});
+  });
+}
+
 function renderCC(){
+  initCCLayout();
+  CC_BUCKETS.forEach(b=>renderBucketColumn(b));
   const txs=((D.months||{})[D.currentMonth]||{transactions:[]}).transactions||[];
-  document.getElementById('cc-month-label').textContent=monthLabel(D.currentMonth);
-  if(!txs.length){document.getElementById('cc-loaded').style.display='none';return;}
-  document.getElementById('cc-loaded').style.display='block';
-  const charges=txs.filter(t=>t.amount>0);
-  const total=charges.reduce((s,t)=>s+t.amount,0);
-  document.getElementById('cc-charged').textContent=fmt(total);
-  const sfTotal=charges.filter(t=>t.isSinkingFund).reduce((s,t)=>s+t.amount,0);
-  const actualTotal=total-sfTotal;
-  const sfNote=document.getElementById('cc-sf-note');
-  if(sfNote) sfNote.textContent=sfTotal>0?fmt(sfTotal)+' sinking fund':'';
-  const actualEl=document.getElementById('cc-actual');
-  if(actualEl){actualEl.textContent=fmt(actualTotal);actualEl.style.color=actualTotal>tot.exp()?'var(--critical)':'var(--good-text)';}
-  const cb=catBudget(),ca=catActual();
-  const catsWithBudget=Object.keys(cb).filter(c=>cb[c]>0);
-  document.getElementById('cc-ok').textContent=catsWithBudget.filter(c=>(ca[c]||0)<=cb[c]&&(ca[c]||0)>0).length+' / '+catsWithBudget.length;
-  document.getElementById('cc-over').textContent=catsWithBudget.filter(c=>(ca[c]||0)>cb[c]).length||'0';
-  renderBVA(cb,ca); renderUncat(cb,ca); renderTxTable();
+  const analyticsEl=document.getElementById('cc-analytics');
+  if(analyticsEl){
+    if(txs.length){analyticsEl.style.display='';const cb=catBudget(),ca=catActual();renderBVA(cb,ca);renderUncat(cb,ca);}
+    else analyticsEl.style.display='none';
+  }
+}
+
+function renderBucketColumn(b){
+  const txs=((D.months||{})[D.currentMonth]||{transactions:[]}).transactions||[];
+  const bTxs=txs.filter(t=>(t.bucket||'Shared')===b.bucket).sort((a,c)=>new Date(c.date)-new Date(a.date));
+  const total=bTxs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const sfTotal=bTxs.filter(t=>t.amount>0&&t.isSinkingFund).reduce((s,t)=>s+t.amount,0);
+  const actual=total-sfTotal;
+  const totalEl=document.getElementById('cc-total-'+b.id);
+  if(totalEl) totalEl.textContent=fmt(total);
+  const actualEl=document.getElementById('cc-actual-'+b.id);
+  if(actualEl){actualEl.textContent=fmt(actual);actualEl.style.color=actual>0?'var(--good-text)':'';}
+  const listEl=document.getElementById('cc-txlist-'+b.id);
+  if(!listEl) return;
+  if(!bTxs.length){
+    listEl.innerHTML=`<div style="text-align:center;padding:28px 10px;color:var(--text-muted);font-size:12px;border:2px dashed var(--border);border-radius:var(--radius-sm);">
+      <div style="font-size:26px;margin-bottom:6px;">📄</div>
+      <div>Import a CSV or tap <strong>＋ Add</strong></div>
+      <div style="margin-top:4px;font-size:11px;">You can also drag &amp; drop a CSV here</div>
+    </div>`;
+    return;
+  }
+  listEl.innerHTML=`<div style="overflow-x:auto;max-height:480px;overflow-y:auto;">
+    <table class="tbl" style="font-size:12px;">
+      <thead><tr><th style="font-size:10px;">Date</th><th style="font-size:10px;">Description</th><th style="font-size:10px;">Category</th><th style="text-align:right;font-size:10px;">Amt</th><th style="width:26px;font-size:10px;text-align:center;" title="Sinking fund">🪣</th><th style="width:20px;"></th></tr></thead>
+      <tbody>${bTxs.map(tx=>{
+        const color=CAT_COLORS[tx.category]||'#898781',isCredit=tx.amount<0;
+        return `<tr style="${tx.isSinkingFund?'opacity:0.52;':''}">
+          <td style="font-size:11px;color:var(--text-muted);white-space:nowrap;">${esc(tx.date)}</td>
+          <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(tx.description)}">${esc(tx.description)}${tx.isSinkingFund?' <span style="font-size:9px;color:var(--cat-7);font-weight:700;">🪣</span>':''}</td>
+          <td><select class="sel" data-txid="${tx._id}" onchange="updateTxCat(this)" style="font-size:11px;border-color:${color}30;background:${color}12;">${CATEGORIES.map(c=>`<option value="${c}"${tx.category===c?' selected':''}>${c}</option>`).join('')}</select></td>
+          <td style="text-align:right;font-variant-numeric:tabular-nums;color:${isCredit?'var(--good-text)':'inherit'};">${isCredit?'+':''}${fmt(Math.abs(tx.amount))}</td>
+          <td style="text-align:center;"><button style="background:none;border:none;cursor:pointer;font-size:14px;opacity:${tx.isSinkingFund?'1':'0.18'};transition:opacity .15s;padding:1px 2px;" title="${tx.isSinkingFund?'Unmark sinking fund':'Mark as sinking fund'}" onclick="updateTxSF('${tx._id}',${!tx.isSinkingFund})">🪣</button></td>
+          <td style="text-align:center;"><button style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:12px;padding:1px 3px;line-height:1;" title="Delete" onclick="deleteTx('${tx._id}')">✕</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
+function toggleManualAdd(bucket){
+  const lc=bucket.toLowerCase();
+  const el=document.getElementById('cc-add-'+lc);
+  if(!el) return;
+  const show=el.style.display==='none';
+  el.style.display=show?'block':'none';
+  if(show){
+    const dateEl=document.getElementById('add-'+lc+'-date');
+    if(dateEl&&!dateEl.value){const d=new Date();dateEl.value=d.toISOString().split('T')[0];}
+    document.getElementById('add-'+lc+'-desc')?.focus();
+  }
+}
+
+function cancelManualTx(bucket){
+  const lc=bucket.toLowerCase();
+  document.getElementById('cc-add-'+lc).style.display='none';
+  ['date','desc','amt'].forEach(f=>{const el=document.getElementById('add-'+lc+'-'+f);if(el)el.value='';});
+}
+
+function saveManualTx(bucket){
+  const lc=bucket.toLowerCase();
+  const date=(document.getElementById('add-'+lc+'-date')||{}).value||'';
+  const desc=((document.getElementById('add-'+lc+'-desc')||{}).value||'').trim();
+  const amt=parseFloat((document.getElementById('add-'+lc+'-amt')||{}).value||'');
+  const cat=(document.getElementById('add-'+lc+'-cat')||{}).value||'Other';
+  if(!desc){toast('❌ Enter a description');return;}
+  if(isNaN(amt)||amt<=0){toast('❌ Enter a valid amount > 0');return;}
+  if(!D.months) D.months={};
+  if(!D.months[D.currentMonth]) D.months[D.currentMonth]={transactions:[],additionalIncome:[]};
+  if(!D.months[D.currentMonth].transactions) D.months[D.currentMonth].transactions=[];
+  const d=new Date();
+  D.months[D.currentMonth].transactions.push({_id:uid(),date:date||d.toISOString().split('T')[0],description:desc,amount:amt,category:cat,bucket,isSinkingFund:false});
+  save();renderCC();cancelManualTx(bucket);
+  toast('✅ Added to '+bucket);
+}
+
+function deleteTx(id){
+  const mo=(D.months||{})[D.currentMonth];
+  if(!mo) return;
+  mo.transactions=(mo.transactions||[]).filter(t=>t._id!==id);
+  save();renderCC();renderSummary();
+}
+
+function clearBucketTxs(bucket){
+  if(!confirm('Clear all '+bucket+' transactions for '+monthLabel(D.currentMonth)+'?')) return;
+  const mo=(D.months||{})[D.currentMonth];
+  if(mo) mo.transactions=(mo.transactions||[]).filter(t=>(t.bucket||'Shared')!==bucket);
+  save();renderCC();renderSummary();
 }
 
 function renderBVA(cb,ca){
@@ -1298,24 +1392,6 @@ function renderUncat(cb,ca){
   el.innerHTML=html;
 }
 
-function renderTxTable(){
-  const txs=((D.months||{})[D.currentMonth]||{transactions:[]}).transactions||[];
-  const q=(document.getElementById('cc-search')||{}).value||'';
-  const low=q.toLowerCase();
-  const filtered=low?txs.filter(t=>t.description.toLowerCase().includes(low)||t.category.toLowerCase().includes(low)):txs;
-  const tbody=document.getElementById('cc-tbody');
-  if(!filtered.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;">No transactions found</td></tr>';return;}
-  tbody.innerHTML=filtered.map(tx=>{
-    const color=CAT_COLORS[tx.category]||'#898781',isCredit=tx.amount<0;
-    return `<tr style="${tx.isSinkingFund?'opacity:0.58;':''}">
-      <td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">${esc(tx.date)}</td>
-      <td style="font-size:13px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(tx.description)}">${esc(tx.description)}${tx.isSinkingFund?' <span style="font-size:10px;color:var(--cat-7);font-weight:700;">🪣 SF</span>':''}</td>
-      <td><select class="sel" data-txid="${tx._id}" onchange="updateTxCat(this)" style="border-color:${color}30;background:${color}12;">${CATEGORIES.map(c=>`<option value="${c}"${tx.category===c?' selected':''}>${c}</option>`).join('')}</select></td>
-      <td style="text-align:right;font-variant-numeric:tabular-nums;font-size:13px;color:${isCredit?'var(--good-text)':'var(--text-primary)'};">${isCredit?'+ ':' '}${fmt(Math.abs(tx.amount))}</td>
-      <td style="text-align:center;"><button style="background:none;border:none;cursor:pointer;font-size:16px;opacity:${tx.isSinkingFund?'1':'0.2'};transition:opacity .15s;padding:2px 4px;" title="${tx.isSinkingFund?'Unmark sinking fund':'Mark as covered by sinking fund'}" onclick="updateTxSF('${tx._id}',${!tx.isSinkingFund})">🪣</button></td>
-    </tr>`;
-  }).join('');
-}
 
 function updateTxCat(sel){
   const id=sel.dataset.txid,cat=sel.value;
@@ -1332,27 +1408,23 @@ function updateTxSF(id,val){
   if(tx){tx.isSinkingFund=!!val;save();renderCC();renderSummary();}
 }
 
-function clearCC(){
-  if(!confirm('Clear all transactions for '+monthLabel(D.currentMonth)+'?')) return;
-  if((D.months||{})[D.currentMonth]) D.months[D.currentMonth].transactions=[];
-  save(); renderCC();
-}
-
 /* ── CSV Parsing ── */
-function handleFile(e){
+function handleFile(e,bucket){
+  bucket=bucket||'Shared';
   const file=(e.target||{}).files?.[0]||(e.dataTransfer||{}).files?.[0];
   if(!file) return;
   const reader=new FileReader();
   reader.onload=evt=>{
     try{
-      const txs=parseAmex(evt.target.result);
+      const txs=parseAmex(evt.target.result).map(t=>({...t,bucket}));
       if(!D.months) D.months={};
       if(!D.months[D.currentMonth]) D.months[D.currentMonth]={transactions:[],additionalIncome:[]};
-      D.months[D.currentMonth].transactions=txs;
-      save(); renderCC();
-      toast(`✅ Imported ${txs.length} transactions for ${monthLabel(D.currentMonth)}`);
+      const others=(D.months[D.currentMonth].transactions||[]).filter(t=>(t.bucket||'Shared')!==bucket);
+      D.months[D.currentMonth].transactions=[...others,...txs];
+      save(); renderCC(); renderSummary();
+      toast(`✅ Imported ${txs.length} transactions → ${bucket} (${monthLabel(D.currentMonth)})`);
     } catch(err){
-      toast('❌ Could not parse CSV — please use an Amex export');
+      toast('❌ Could not parse CSV — check the format and try again');
       console.error(err);
     }
   };
@@ -1411,12 +1483,6 @@ function csvLine(line){
   res.push(cur);return res;
 }
 function clean(s){return String(s||'').replace(/^"|"$/g,'').trim();}
-
-/* ── Drag & drop ── */
-const dz=document.getElementById('drop-zone');
-dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
-dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
-dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');handleFile(e);});
 
 /* ── Utils ── */
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
