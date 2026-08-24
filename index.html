@@ -1192,26 +1192,28 @@ function initCCLayout(){
   const catOpts=CATEGORIES.map(c=>`<option value="${c}">${esc(c)}</option>`).join('');
   const colHtml=b=>`
     <div class="card" id="cc-col-${b.id}" style="cursor:default;">
-      <div class="card-head" style="border-bottom-color:rgba(${b.rgb},.18);">
-        <span style="font-size:13px;font-weight:700;color:${b.color};">${b.label}</span>
-        <div style="display:flex;gap:5px;align-items:center;">
-          <input type="file" id="csv-${b.id}" accept=".csv" onchange="handleFile(event,'${b.bucket}')" style="display:none;">
-          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('csv-${b.id}').click()" title="Import CSV">📄 CSV</button>
-          <button class="btn btn-ghost btn-sm" onclick="toggleManualAdd('${b.bucket}')" title="Add expense manually">＋ Add</button>
-          <button class="btn btn-ghost btn-sm" onclick="clearBucketTxs('${b.bucket}')" title="Clear ${b.bucket} transactions" style="color:var(--text-muted);font-size:11px;">✕ Clear</button>
+      <div style="padding:12px 14px;border-bottom:1px solid rgba(${b.rgb},.18);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:14px;font-weight:700;color:${b.color};">${b.label}</span>
+          <div style="display:flex;gap:4px;align-items:center;">
+            <input type="file" id="csv-${b.id}" accept=".csv" onchange="handleFile(event,'${b.bucket}')" style="display:none;">
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('csv-${b.id}').click()" title="Import CSV" style="font-size:11px;padding:3px 8px;">📄 CSV</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleManualAdd('${b.bucket}')" title="Add expense manually" style="font-size:11px;padding:3px 8px;">＋ Add</button>
+            <button class="btn btn-ghost btn-sm" onclick="clearBucketTxs('${b.bucket}')" title="Clear ${b.bucket} transactions" style="font-size:11px;padding:3px 8px;color:var(--text-muted);">✕</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:var(--surface-hover);border-radius:var(--radius-sm);padding:8px 10px;">
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:1px;">Total Charged</div>
+            <div id="cc-total-${b.id}" style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;">$0</div>
+          </div>
+          <div style="background:var(--surface-hover);border-radius:var(--radius-sm);padding:8px 10px;">
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:1px;">Actual Spending</div>
+            <div id="cc-actual-${b.id}" style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--good-text);">$0</div>
+          </div>
         </div>
       </div>
-      <div class="card-body" style="padding:12px;">
-        <div style="display:flex;gap:8px;margin-bottom:12px;">
-          <div style="flex:1;background:var(--surface-hover);border-radius:var(--radius-sm);padding:8px;text-align:center;">
-            <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Total Charged</div>
-            <div id="cc-total-${b.id}" style="font-size:16px;font-weight:700;">$0</div>
-          </div>
-          <div style="flex:1;background:var(--surface-hover);border-radius:var(--radius-sm);padding:8px;text-align:center;">
-            <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Actual Spending</div>
-            <div id="cc-actual-${b.id}" style="font-size:16px;font-weight:700;color:var(--good-text);">$0</div>
-          </div>
-        </div>
+      <div style="padding:10px 12px;">
         <div id="cc-add-${b.id}" style="display:none;background:var(--surface-hover);border-radius:var(--radius-sm);padding:10px;margin-bottom:10px;">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
             <input id="add-${b.id}-date" type="date" style="font-size:12px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;background:var(--surface-card);color:var(--text-primary);">
@@ -1231,8 +1233,8 @@ function initCCLayout(){
     <div class="bucket-cols" style="align-items:start;">
       ${CC_BUCKETS.map(colHtml).join('')}
     </div>
-    <div class="grid-2" id="cc-analytics" style="display:none;">
-      <div class="card"><div class="card-head"><span class="card-title">Budget vs. Actual</span></div><div class="card-body" id="cc-bva"></div></div>
+    <div class="grid-2 mb" id="cc-analytics" style="display:none;">
+      <div class="card"><div class="card-head"><span class="card-title">Budget vs. Actual (All Buckets)</span></div><div class="card-body" id="cc-bva"></div></div>
       <div class="card"><div class="card-head"><span class="card-title">Spending Without a Budget</span></div><div class="card-body" id="cc-uncat"></div></div>
     </div>`;
   CC_BUCKETS.forEach(b=>{
@@ -1268,28 +1270,27 @@ function renderBucketColumn(b){
   const listEl=document.getElementById('cc-txlist-'+b.id);
   if(!listEl) return;
   if(!bTxs.length){
-    listEl.innerHTML=`<div style="text-align:center;padding:28px 10px;color:var(--text-muted);font-size:12px;border:2px dashed var(--border);border-radius:var(--radius-sm);">
-      <div style="font-size:26px;margin-bottom:6px;">📄</div>
+    listEl.innerHTML=`<div style="text-align:center;padding:24px 10px;color:var(--text-muted);font-size:12px;border:2px dashed var(--border);border-radius:var(--radius-sm);">
+      <div style="font-size:24px;margin-bottom:5px;">📄</div>
       <div>Import a CSV or tap <strong>＋ Add</strong></div>
-      <div style="margin-top:4px;font-size:11px;">You can also drag &amp; drop a CSV here</div>
+      <div style="margin-top:3px;font-size:11px;opacity:.7;">Drag &amp; drop a CSV onto this column</div>
     </div>`;
     return;
   }
-  listEl.innerHTML=`<div style="overflow-x:auto;max-height:480px;overflow-y:auto;">
-    <table class="tbl" style="font-size:12px;">
-      <thead><tr><th style="font-size:10px;">Date</th><th style="font-size:10px;">Description</th><th style="font-size:10px;">Category</th><th style="text-align:right;font-size:10px;">Amt</th><th style="width:26px;font-size:10px;text-align:center;" title="Sinking fund">🪣</th><th style="width:20px;"></th></tr></thead>
-      <tbody>${bTxs.map(tx=>{
-        const color=CAT_COLORS[tx.category]||'#898781',isCredit=tx.amount<0;
-        return `<tr style="${tx.isSinkingFund?'opacity:0.52;':''}">
-          <td style="font-size:11px;color:var(--text-muted);white-space:nowrap;">${esc(tx.date)}</td>
-          <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(tx.description)}">${esc(tx.description)}${tx.isSinkingFund?' <span style="font-size:9px;color:var(--cat-7);font-weight:700;">🪣</span>':''}</td>
-          <td><select class="sel" data-txid="${tx._id}" onchange="updateTxCat(this)" style="font-size:11px;border-color:${color}30;background:${color}12;">${CATEGORIES.map(c=>`<option value="${c}"${tx.category===c?' selected':''}>${c}</option>`).join('')}</select></td>
-          <td style="text-align:right;font-variant-numeric:tabular-nums;color:${isCredit?'var(--good-text)':'inherit'};">${isCredit?'+':''}${fmt(Math.abs(tx.amount))}</td>
-          <td style="text-align:center;"><button style="background:none;border:none;cursor:pointer;font-size:14px;opacity:${tx.isSinkingFund?'1':'0.18'};transition:opacity .15s;padding:1px 2px;" title="${tx.isSinkingFund?'Unmark sinking fund':'Mark as sinking fund'}" onclick="updateTxSF('${tx._id}',${!tx.isSinkingFund})">🪣</button></td>
-          <td style="text-align:center;"><button style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:12px;padding:1px 3px;line-height:1;" title="Delete" onclick="deleteTx('${tx._id}')">✕</button></td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table>
+  listEl.innerHTML=`<div style="overflow-y:auto;max-height:420px;">
+    ${bTxs.map(tx=>{
+      const color=CAT_COLORS[tx.category]||'#898781',isCredit=tx.amount<0;
+      return `<div style="display:grid;grid-template-columns:auto 1fr auto auto auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--gridline);${tx.isSinkingFund?'opacity:0.52;':''}">
+        <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;min-width:60px;">${esc(tx.date)}</span>
+        <span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${esc(tx.description)}">${esc(tx.description)}${tx.isSinkingFund?' <span style="font-size:9px;color:var(--cat-7);font-weight:700;">🪣</span>':''}</span>
+        <select class="sel" data-txid="${tx._id}" onchange="updateTxCat(this)" style="font-size:11px;border-color:${color}30;background:${color}12;max-width:110px;">${CATEGORIES.map(c=>`<option value="${c}"${tx.category===c?' selected':''}>${c}</option>`).join('')}</select>
+        <span style="font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap;color:${isCredit?'var(--good-text)':'inherit'};">${isCredit?'+':''}${fmt(Math.abs(tx.amount))}</span>
+        <div style="display:flex;align-items:center;gap:2px;">
+          <button style="background:none;border:none;cursor:pointer;font-size:13px;opacity:${tx.isSinkingFund?'1':'0.18'};transition:opacity .15s;padding:1px;" title="${tx.isSinkingFund?'Unmark sinking fund':'Mark as sinking fund'}" onclick="updateTxSF('${tx._id}',${!tx.isSinkingFund})">🪣</button>
+          <button style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:12px;padding:1px 2px;line-height:1;" title="Delete" onclick="deleteTx('${tx._id}')">✕</button>
+        </div>
+      </div>`;
+    }).join('')}
   </div>`;
 }
 
@@ -1576,33 +1577,34 @@ function renderSummary(){
     const cats=Object.entries(cbMap).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
     if(!cats.length) return '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">No expenses budgeted.</div>';
     const showActual=hasActual&&Object.keys(caMap).length>0;
-    let h=`<table class="tbl" style="font-size:12px;">
-      <thead><tr>
-        <th>Category</th>
-        <th style="text-align:right;width:88px;">Budgeted</th>`;
-    if(showActual) h+=`<th style="text-align:right;width:88px;">Actual</th><th style="text-align:right;width:76px;">Diff</th>`;
-    h+='</tr></thead><tbody>';
+    let h='<div style="margin-top:8px;display:flex;flex-direction:column;gap:0;">';
     for(const [cat,bv] of cats){
       const av=caMap[cat]||0;
       const diff=av-bv;
       const dotColor=CAT_COLORS[cat]||'#898781';
-      const diffColor=diff<=0?'var(--good-text)':'var(--critical)';
-      const overMark=showActual&&av>bv&&bv>0?' <span style="font-size:9px;font-weight:700;color:var(--critical);">OVER</span>':'';
-      h+=`<tr>
-        <td style="padding:5px 12px;">
-          <span style="display:inline-flex;align-items:center;gap:5px;">
-            <span style="width:7px;height:7px;border-radius:2px;background:${dotColor};flex-shrink:0;display:inline-block;"></span>
-            ${esc(cat)}${overMark}
-          </span>
-        </td>
-        <td style="text-align:right;font-variant-numeric:tabular-nums;padding:5px 12px;">${fmt(bv)}</td>`;
-      if(showActual){
-        h+=`<td style="text-align:right;font-variant-numeric:tabular-nums;padding:5px 12px;">${av>0?fmt(av):'—'}</td>
-        <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600;padding:5px 12px;color:${av>0?diffColor:'var(--text-muted)'};">${av>0?(diff<0?fmt(diff):('+'+fmt(diff))):'—'}</td>`;
-      }
-      h+='</tr>';
+      const isOver=showActual&&av>bv&&bv>0;
+      const diffStr=showActual&&av>0?(diff<0?fmt(diff):'+'+fmt(diff)):null;
+      const diffColor=isOver?'var(--critical)':'var(--good-text)';
+      h+=`<div style="display:grid;grid-template-columns:1fr auto auto${showActual?' auto':''};align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+          <span style="width:7px;height:7px;border-radius:2px;background:${dotColor};flex-shrink:0;"></span>
+          <span style="font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(cat)}</span>
+          ${isOver?'<span style="font-size:9px;font-weight:700;color:var(--critical);flex-shrink:0;">OVER</span>':''}
+        </div>
+        <span style="font-size:12px;font-variant-numeric:tabular-nums;color:var(--text-muted);white-space:nowrap;">${fmt(bv)}</span>
+        ${showActual?`<span style="font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap;">${av>0?fmt(av):'—'}</span>`:''}
+        ${showActual?`<span style="font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;color:${av>0?diffColor:'var(--text-muted)'};">${diffStr||'—'}</span>`:''}
+      </div>`;
     }
-    h+='</tbody></table>';
+    h+='</div>';
+    if(showActual){
+      h=`<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;padding:4px 0 6px;border-bottom:2px solid var(--border);margin-bottom:2px;">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Category</span>
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);">Budget</span>
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);">Actual</span>
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);">Diff</span>
+      </div>`+h;
+    }
     return h;
   }
 
@@ -1666,15 +1668,10 @@ function renderSummary(){
       {name:'Everett',icon:'👔',color:'#eb6834'},
       {name:'Rachel',icon:'👗',color:'#1baf7a'},
     ];
-    // Primary bucket for each category (first match wins)
-    const catBucketMap={};
-    for(const e of D.expenses){
-      if(!catBucketMap[e.category]) catBucketMap[e.category]=e.bucket||'Shared';
-    }
-    // Actual spending per bucket × category
+    // Actual spending per bucket × category — use transaction's own bucket field
     const bucketActualCat={Shared:{},Everett:{},Rachel:{}};
     for(const t of txs.filter(t=>t.amount>0&&!t.isSinkingFund)){
-      const bk=catBucketMap[t.category]||'Shared';
+      const bk=t.bucket||'Shared';
       bucketActualCat[bk][t.category]=(bucketActualCat[bk][t.category]||0)+t.amount;
     }
     const totalExp=budgeted||1;
