@@ -264,7 +264,7 @@
   <div class="tab active" data-tab="summary">📋 Summary</div>
   <div class="tab" data-tab="dashboard">📊 Dashboard</div>
   <div class="tab" data-tab="budget">💰 Budget &amp; Income</div>
-  <div class="tab" data-tab="sinking">🪣 Sinking Funds</div>
+  <div class="tab" data-tab="sinking">🪣 Reserve Planner</div>
   <div class="tab" data-tab="cc">💳 Monthly Expenses</div>
   <div class="tab" data-tab="rachel">👗 Rachel's View</div>
   <div class="tab" data-tab="rules">⚡ Auto-Rules</div>
@@ -274,10 +274,9 @@
 
   <!-- ══ DASHBOARD ══ -->
   <div class="tab-panel" id="panel-dashboard">
-    <div class="grid-4">
+    <div class="grid-3">
       <div class="kpi"><div class="kpi-label">Monthly Income</div><div class="kpi-value" id="d-income">$0</div><div class="kpi-sub">After-tax take-home</div></div>
       <div class="kpi"><div class="kpi-label">Monthly Expenses</div><div class="kpi-value" id="d-exp">$0</div><div class="kpi-sub">Budgeted</div></div>
-      <div class="kpi"><div class="kpi-label">Sinking Fund Target</div><div class="kpi-value" id="d-sink">$0</div><div class="kpi-sub">Set aside monthly</div></div>
       <div class="kpi"><div class="kpi-label">Net Monthly</div><div class="kpi-value" id="d-net">$0</div><div class="kpi-badge" id="d-rate"></div></div>
     </div>
 
@@ -304,9 +303,9 @@
         <div class="card-head"><span class="card-title">🔄 Monthly Subscriptions</span><span id="d-sub-total" style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;"></span></div>
         <div class="card-body" id="d-sub-list"><div class="empty"><div class="empty-icon">🔄</div>Check the 🔄 box on any expense to mark it as a subscription</div></div>
       </div>
-      <div class="card">
-        <div class="card-head"><span class="card-title">Sinking Funds</span></div>
-        <div class="card-body" id="d-sink-list"><div class="empty"><div class="empty-icon">🪣</div>Add non-monthly expenses in Sinking Funds</div></div>
+      <div class="card" style="border-color:color-mix(in srgb,var(--cat-7) 30%,var(--border));">
+        <div class="card-head"><span class="card-title">🏦 Reserve Fund</span></div>
+        <div class="card-body" id="d-reserve-mini"></div>
       </div>
     </div>
 
@@ -339,9 +338,9 @@
             <div class="ostat-sub">budgeted monthly</div>
           </div>
           <div class="ostat">
-            <div class="ostat-label">Sinking Funds</div>
+            <div class="ostat-label">Reserve Fund</div>
             <div class="ostat-value" id="oh-sinking">$0</div>
-            <div class="ostat-sub">set aside monthly</div>
+            <div class="ostat-sub">remaining balance</div>
           </div>
           <div class="ostat ostat-net">
             <div class="ostat-label">Net Monthly</div>
@@ -473,8 +472,7 @@
             <tr><td style="color:var(--text-secondary);padding-left:20px;">👔 Everett's Expenses</td><td style="text-align:right;" id="bs-everett">$0</td></tr>
             <tr><td style="color:var(--text-secondary);padding-left:20px;">👗 Rachel's Expenses</td><td style="text-align:right;" id="bs-rachel">$0</td></tr>
             <tr><td style="color:var(--text-secondary);padding-left:20px;">🔄 Subscriptions (included above)</td><td style="text-align:right;font-variant-numeric:tabular-nums;" id="bs-subs">$0</td></tr>
-            <tr><td style="color:var(--text-secondary);">Sinking Fund Monthly Target</td><td style="text-align:right;" id="bs-sink">$0</td></tr>
-            <tr class="tfoot-row"><td>Net (Income − All Expenses − Sinking)</td><td style="text-align:right;" id="bs-net">$0</td></tr>
+            <tr class="tfoot-row"><td>Net (Income − All Expenses)</td><td style="text-align:right;" id="bs-net">$0</td></tr>
           </tbody>
         </table>
       </div>
@@ -483,19 +481,31 @@
 
   <!-- ══ SINKING FUNDS ══ -->
   <div class="tab-panel" id="panel-sinking">
-    <div class="info-bar">
-      <strong style="color:var(--text-primary);">💡 How sinking funds work:</strong>
-      Enter the estimated cost of a non-monthly expense and how often it occurs.
-      The tool calculates how much to set aside each month so you're never caught off guard —
-      separate from your regular savings. Mark expenses in the Budget tab with 🪣 if they're already covered here so they don't double-count.
-    </div>
-    <div class="card">
-      <table class="tbl">
-        <thead><tr><th>Name</th><th style="text-align:right;">Estimated Cost</th><th>How Often</th><th style="text-align:right;">Monthly Target</th><th style="width:36px;"></th></tr></thead>
-        <tbody id="sf-body"></tbody>
-        <tfoot><tr class="tfoot-row"><td colspan="3">Total Monthly Set-Aside</td><td style="text-align:right;" id="sf-total">$0 / mo</td><td></td></tr></tfoot>
-      </table>
-      <button class="btn-add" onclick="addSF()">＋ Add non-monthly expense</button>
+    <!-- Reserve summary bar -->
+    <div id="rp-reserve-bar" class="mb"></div>
+    <!-- Two-column layout: planned + actual draws -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+      <!-- Planned annual expenses -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">📋 Planned Annual Expenses</span>
+          <button class="btn btn-primary btn-sm" onclick="addSF()">＋ Add</button>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div id="rp-planned-list"></div>
+          <div style="border-top:2px solid var(--border);padding:10px 16px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13px;font-weight:600;color:var(--text-secondary);">Total Estimated Annual</span>
+            <span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;" id="rp-planned-total">$0</span>
+          </div>
+        </div>
+      </div>
+      <!-- Actual draws this year -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">🪣 Actual Draws This Year</span>
+        </div>
+        <div class="card-body" style="padding:0;" id="rp-draws-list"></div>
+      </div>
     </div>
   </div>
 
@@ -581,12 +591,6 @@ const CAT_COLORS = {
   'Giving / Charity':'#008300','Pets':'#eda100','Travel':'#2a78d6',
   'Home & Garden':'#4a3aa7','Credit Card Late Fees':'#d03b3b','Other':'#898781'
 };
-const FREQ = [
-  {label:'Monthly',months:1},{label:'Every 2 months',months:2},
-  {label:'Quarterly',months:3},{label:'Every 6 months',months:6},
-  {label:'Annually',months:12},{label:'Every 2 years',months:24},
-  {label:'Every 3 years',months:36},{label:'Every 4 years',months:48}
-];
 const KW = {
   'Housing':['mortgage','rent','hoa','property tax','home depot','lowe\'s','lowes','ace hardware'],
   'Utilities':['electric','duke energy','georgia power','water','sewer','trash','spectrum','xfinity','comcast','at&t','verizon','t-mobile','tmobile','internet','cox','charter','directv'],
@@ -748,12 +752,10 @@ const tot={
   },
   income:()=>tot.baseIncome()+tot.additionalIncome(),
   exp:()=>D.expenses.reduce((s,r)=>s+(+r.budget||0),0),
-  sinking:()=>D.sinkingFunds.reduce((s,sf)=>s+sfMo(sf),0),
   subs:()=>D.expenses.filter(e=>e.isSubscription).reduce((s,e)=>s+(+e.budget||0),0),
-  net:()=>tot.income()-tot.exp()-tot.sinking(),
+  net:()=>tot.income()-tot.exp(),
   rate:()=>{const i=tot.income();return i>0?tot.net()/i*100:0;}
 };
-function sfMo(sf){return(+sf.amount||0)/Math.max(1,+sf.months||12);}
 function catBudget(){const m={};for(const e of D.expenses)m[e.category]=(m[e.category]||0)+(+e.budget||0);return m;}
 function catActual(){
   const txs=((D.months||{})[D.currentMonth]||{transactions:[]}).transactions||[];
@@ -797,15 +799,17 @@ function updateHeader(){document.getElementById('month-label').textContent=month
 
 /* ── Dashboard ── */
 function renderDashboard(){
-  const income=tot.income(),exp=tot.exp(),sink=tot.sinking(),net=tot.net(),rate=tot.rate();
+  const income=tot.income(),exp=tot.exp(),net=tot.net(),rate=tot.rate();
   document.getElementById('d-income').textContent=fmt(income);
   document.getElementById('d-exp').textContent=fmt(exp);
-  document.getElementById('d-sink').textContent=fmt(sink);
   document.getElementById('d-net').textContent=fmt(net);
+  // Reserve Fund remaining in the overall hero
+  const reserveRemaining=(D.reserveBalance||0)-reserveYearDraws();
+  document.getElementById('oh-sinking').textContent=fmt(reserveRemaining);
   const rateEl=document.getElementById('d-rate');
   if(income>0){rateEl.textContent=(net>=0?'▲ ':'▼ ')+Math.abs(rate).toFixed(1)+'% of income';rateEl.className='kpi-badge '+(net>=0?'good':'bad');}
   else{rateEl.textContent='Enter income to calculate';rateEl.className='kpi-badge';}
-  const total=exp+sink,pct=income>0?Math.min(total/income*100,100):0;
+  const pct=income>0?Math.min(exp/income*100,100):0;
   const bar=document.getElementById('d-health-bar');
   bar.style.width=pct+'%';bar.style.background=pct<80?'var(--good)':pct<100?'var(--warning)':'var(--critical)';
   document.getElementById('d-health-pct').textContent=income>0?pct.toFixed(0)+'% of income committed':'';
@@ -813,10 +817,10 @@ function renderDashboard(){
   document.getElementById('d-hi').textContent=income>0?fmt(income):'';
   const msgEl=document.getElementById('d-health-msg');
   if(income>0){
-    if(net>=0)msgEl.innerHTML=`<span class="good-c">${fmt(net)} available after all expenses and sinking funds.</span>`;
+    if(net>=0)msgEl.innerHTML=`<span class="good-c">${fmt(net)} available after all expenses.</span>`;
     else msgEl.innerHTML=`<span class="bad-c">Over budget by ${fmt(Math.abs(net))} — see recommendations below.</span>`;
   } else msgEl.textContent='';
-  renderCatChart(); renderSubsDash(); renderSinkDash(); renderRecs();
+  renderCatChart(); renderSubsDash(); renderSinking(); renderRecs();
 }
 
 function renderCatChart(){
@@ -878,30 +882,13 @@ function renderSubsDash(){
   el.innerHTML=html;
 }
 
-function renderSinkDash(){
-  const el=document.getElementById('d-sink-list');
-  if(!D.sinkingFunds.length){el.innerHTML='<div class="empty"><div class="empty-icon">🪣</div>Add non-monthly expenses in Sinking Funds</div>';return;}
-  let html='';
-  for(const sf of D.sinkingFunds){
-    const mo=sfMo(sf),fr=FREQ.find(f=>f.months===+sf.months)||{label:`Every ${sf.months} mo`};
-    html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gridline);">
-      <div><div style="font-size:13px;font-weight:500;">${esc(sf.name)}</div><div style="font-size:11px;color:var(--text-muted);">${fmt(sf.amount)} · ${fr.label}</div></div>
-      <div style="font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;">${fmt(mo)}<span style="font-size:11px;font-weight:400;color:var(--text-muted);">/mo</span></div>
-    </div>`;
-  }
-  html+=`<div style="display:flex;justify-content:space-between;padding:10px 0 0;align-items:center;">
-    <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-muted);">Total Set-Aside</span>
-    <span style="font-size:15px;font-weight:700;">${fmt(tot.sinking())}<span style="font-size:11px;font-weight:400;color:var(--text-muted);">/mo</span></span>
-  </div>`;
-  el.innerHTML=html;
-}
 
 function renderRecs(){
   const el=document.getElementById('d-recs');
-  const income=tot.income(),exp=tot.exp(),sink=tot.sinking(),net=tot.net(),rate=tot.rate();
+  const income=tot.income(),exp=tot.exp(),net=tot.net(),rate=tot.rate();
   if(!income){el.innerHTML='<div class="empty">Enter your income and expenses to see personalized recommendations.</div>';return;}
   const recs=[];
-  if(net>=0)recs.push({t:'good',i:'✅',m:`<strong>You're on track!</strong> ${fmt(net)} available after all expenses and sinking funds — a <strong>${rate.toFixed(1)}% savings rate</strong>.`});
+  if(net>=0)recs.push({t:'good',i:'✅',m:`<strong>You're on track!</strong> ${fmt(net)} available after all expenses — a <strong>${rate.toFixed(1)}% savings rate</strong>.`});
   else recs.push({t:'bad',i:'🚨',m:`<strong>Over budget by ${fmt(Math.abs(net))}.</strong> Review the categories below and consider where to trim.`});
   if(rate>=20)recs.push({t:'good',i:'🏆',m:`<strong>Excellent ${rate.toFixed(1)}% savings rate.</strong> You're hitting the 20% target financial advisors recommend. Consider directing surplus to investments or your emergency fund.`});
   else if(net>0&&rate<20)recs.push({t:'warn',i:'📈',m:`<strong>Savings rate: ${rate.toFixed(1)}%.</strong> To reach the recommended 20%, save an additional <strong>${fmt(income*.2-net)}/mo</strong>.`});
@@ -920,7 +907,7 @@ function renderRecs(){
     const subPct=subTotal/income*100;
     if(subPct>10)recs.push({t:'warn',i:'🔄',m:`<strong>Recurring subscriptions total ${fmt(subTotal)}/mo (${subPct.toFixed(0)}% of income).</strong> Review your subscriptions in the Budget tab.`});
   }
-  if(!D.sinkingFunds.length)recs.push({t:'warn',i:'🪣',m:`<strong>No sinking funds set up yet.</strong> Visit the Sinking Funds tab to add car maintenance, home repairs, and annual bills.`});
+  if(!D.sinkingFunds.length)recs.push({t:'warn',i:'🪣',m:`<strong>No Reserve Planner items yet.</strong> Visit the Reserve Planner tab to add planned annual expenses like car maintenance and home repairs.`});
   if(net>0&&net<500)recs.push({t:'warn',i:'🏦',m:`<strong>${fmt(net)}/mo surplus is a solid start.</strong> A 3–6 month emergency fund would be <strong>${fmtS(exp*3)}–${fmtS(exp*6)}</strong>. Consider auto-transferring to a HYSA.`});
   const ca=catActual();
   for(const[cat,actual]of Object.entries(ca).filter(([c,v])=>(cb[c]||0)>0&&v>(cb[c]||0))){
@@ -1008,13 +995,12 @@ function renderBucket(bucket,bodyId,totalId){
 /* ── Overall Hero donut chart ── */
 function renderOverallHero(){
   const income=tot.income(),base=tot.baseIncome(),addl=tot.additionalIncome();
-  const expTotal=tot.exp(),sink=tot.sinking(),net=tot.net(),rate=tot.rate();
+  const expTotal=tot.exp(),net=tot.net(),rate=tot.rate();
 
   document.getElementById('oh-month-label').textContent=monthLabel(D.currentMonth);
   document.getElementById('oh-income').textContent=fmt(income);
   document.getElementById('oh-addl-sub').textContent=addl>0?`+ ${fmt(addl)} extra this month`:'';
   document.getElementById('oh-expenses').textContent=fmt(expTotal);
-  document.getElementById('oh-sinking').textContent=fmt(sink);
   const netEl=document.getElementById('oh-net');
   netEl.textContent=fmt(net);
   netEl.style.color=net>=0?'var(--good-text)':'var(--critical)';
@@ -1037,7 +1023,6 @@ function renderOverallHero(){
     {label:'🏠 Shared',val:sharedVal,color:'#2a78d6'},
     {label:'👔 Everett',val:everettVal,color:'#eb6834'},
     {label:'👗 Rachel',val:rachelVal,color:'#1baf7a'},
-    {label:'🪣 Sinking Funds',val:sink,color:'#4a3aa7'},
     {label:'💰 Savings',val:savingsVal,color:'#0ca30c'},
   ];
   const slices=allSlices.filter(s=>s.val>0);
@@ -1080,14 +1065,14 @@ function renderOverallHero(){
 function renderMonthlyPerformance(sharedBudget,everettBudget,rachelBudget){
   const el=document.getElementById('perf-section');
   if(!el) return;
-  const income=tot.income(),exp=tot.exp(),sink=tot.sinking();
+  const income=tot.income(),exp=tot.exp();
   const txs=((D.months||{})[D.currentMonth]||{transactions:[]}).transactions||[];
   const totalActual=txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
   const hasActual=totalActual>0;
 
-  if(!income&&!exp&&!sink){el.innerHTML='';return;}
+  if(!income&&!exp){el.innerHTML='';return;}
 
-  const maxV=Math.max(income,exp+sink,totalActual,1);
+  const maxV=Math.max(income,exp,totalActual,1);
 
   function perfBar(label,budget,actual,color){
     const bPct=Math.min(budget/maxV*100,100);
@@ -1109,7 +1094,7 @@ function renderMonthlyPerformance(sharedBudget,everettBudget,rachelBudget){
   let html=`<div class="perf-section-title">📅 ${monthLabel(D.currentMonth)} Performance${hasActual?' (actual vs budget)':''}</div>`;
 
   html+=perfBar('Income',income,null,'var(--good)');
-  html+=perfBar('Expenses + Sinking',exp+sink,hasActual?totalActual:null,'var(--cat-1)');
+  html+=perfBar('Expenses',exp,hasActual?totalActual:null,'var(--cat-1)');
 
   if(sharedBudget>0||everettBudget>0||rachelBudget>0){
     html+=`<div class="perf-section-title" style="margin-top:10px;">By Bucket</div>`;
@@ -1167,13 +1152,12 @@ function renderBudget(){
   renderMonthlyPerformance(sharedTotal,everettTotal,rachelTotal);
 
   // Summary
-  const income=tot.income(),sink=tot.sinking(),net=tot.net();
+  const income=tot.income(),net=tot.net();
   document.getElementById('bs-income').textContent=fmt(income);
   document.getElementById('bs-shared').textContent=fmt(sharedTotal);
   document.getElementById('bs-everett').textContent=fmt(everettTotal);
   document.getElementById('bs-rachel').textContent=fmt(rachelTotal);
   document.getElementById('bs-subs').textContent=fmt(tot.subs());
-  document.getElementById('bs-sink').textContent=fmt(sink);
   const netEl=document.getElementById('bs-net');
   netEl.textContent=fmt(net);netEl.style.color=net>=0?'var(--good-text)':'var(--critical)';netEl.style.fontWeight='700';
   renderReserveFund();
@@ -1215,19 +1199,104 @@ function delAdditionalIncome(i){
 
 /* ── Sinking Funds ── */
 function renderSinking(){
-  document.getElementById('sf-body').innerHTML=D.sinkingFunds.map((sf,i)=>`
-    <tr>
-      <td><input class="bare-input" value="${esc(sf.name)}" onchange="updSF(${i},'name',this.value)"></td>
-      <td style="text-align:right;"><input class="bare-input num-input" type="number" min="0" step="0.01" value="${sf.amount||''}" onchange="updSF(${i},'amount',this.value)" placeholder="0.00"></td>
-      <td><select class="sel-freq" onchange="updSF(${i},'months',this.value)">${FREQ.map(f=>`<option value="${f.months}"${+sf.months===f.months?' selected':''}>${f.label}</option>`).join('')}</select></td>
-      <td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums;">${fmt(sfMo(sf))}<span style="font-weight:400;color:var(--text-muted);font-size:11px;">/mo</span></td>
-      <td><button class="btn-del" onclick="delSF(${i})">✕</button></td>
-    </tr>`).join('');
-  document.getElementById('sf-total').textContent=fmt(tot.sinking())+' / mo';
+  // ── Reserve summary bar ──
+  const barEl=document.getElementById('rp-reserve-bar');
+  if(barEl){
+    const bal=D.reserveBalance||0;
+    const draws=reserveYearDraws();
+    const remaining=bal-draws;
+    const plannedAnnual=D.sinkingFunds.reduce((s,sf)=>s+(+sf.amount||0),0);
+    const remainColor=remaining<0?'var(--critical)':remaining<bal*0.2?'var(--warning)':'var(--good-text)';
+    const pct=bal>0?Math.min(Math.round(draws/bal*100),100):0;
+    barEl.innerHTML=`<div style="background:var(--surface-card);border:1px solid color-mix(in srgb,var(--cat-7) 35%,var(--border));border-radius:var(--radius);padding:16px 20px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px;">🏦 Reserve Fund Status</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;">
+        <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:2px;">Balance</div><div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;">${fmt(bal)}</div></div>
+        <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:2px;">Drawn This Year</div><div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:${draws>0?'var(--cat-7)':'var(--text-muted)'};">${fmt(draws)}</div></div>
+        <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:2px;">Remaining</div><div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:${remainColor};">${fmt(remaining)}</div></div>
+        <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:2px;">Planned Annual</div><div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--cat-7);">${fmt(plannedAnnual)}</div><div style="font-size:10px;color:var(--text-muted);margin-top:1px;">${bal>0&&plannedAnnual>0?'~'+Math.round(bal/plannedAnnual*10)/10+' yrs coverage':''}</div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:3px;"><span>Reserve used</span><span>${pct}%</span></div>
+      <div style="height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${pct>80?'var(--critical)':pct>60?'var(--warning)':'var(--cat-7)'};border-radius:99px;transition:width .4s;"></div>
+      </div>
+    </div>`;
+  }
+
+  // ── Planned annual expenses ──
+  const plannedEl=document.getElementById('rp-planned-list');
+  if(plannedEl){
+    if(!D.sinkingFunds.length){
+      plannedEl.innerHTML=`<div style="padding:20px 16px;text-align:center;color:var(--text-muted);font-size:13px;">No planned expenses yet — click <strong>＋ Add</strong> to build your annual estimate.</div>`;
+    } else {
+      plannedEl.innerHTML=D.sinkingFunds.map((sf,i)=>`
+        <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <input class="bare-input" value="${esc(sf.name)}" placeholder="Expense name" onchange="updSF(${i},'name',this.value)" style="font-size:13px;font-weight:500;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span style="font-size:13px;color:var(--text-muted);">$</span>
+            <input class="bare-input num-input" type="number" min="0" step="100" value="${sf.amount||''}" onchange="updSF(${i},'amount',this.value)" placeholder="0" style="width:80px;text-align:right;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;">
+            <span style="font-size:11px;color:var(--text-muted);white-space:nowrap;">/yr</span>
+          </div>
+          <button class="btn-del" onclick="delSF(${i})">✕</button>
+        </div>`).join('');
+    }
+    const total=D.sinkingFunds.reduce((s,sf)=>s+(+sf.amount||0),0);
+    document.getElementById('rp-planned-total').textContent=fmt(total);
+  }
+
+  // ── Actual draws this year (all 🪣 transactions across all months in current year) ──
+  const drawsEl=document.getElementById('rp-draws-list');
+  if(drawsEl){
+    const year=D.currentMonth.split('-')[0];
+    const allDraws=[];
+    for(const [mk,mv] of Object.entries(D.months||{})){
+      if(mk.startsWith(year+'-')||mk.startsWith(year+'–')){
+        for(const t of (mv.transactions||[]).filter(t=>t.amount>0&&t.isSinkingFund)){
+          allDraws.push({...t,monthKey:mk});
+        }
+      }
+    }
+    allDraws.sort((a,b)=>new Date(b.date)-new Date(a.date));
+    if(!allDraws.length){
+      drawsEl.innerHTML=`<div style="padding:20px 16px;text-align:center;color:var(--text-muted);font-size:13px;">No 🪣 draws yet this year.<br><span style="font-size:11px;">Tag transactions in Monthly Expenses to see them here.</span></div>`;
+    } else {
+      const total=allDraws.reduce((s,t)=>s+t.amount,0);
+      drawsEl.innerHTML=allDraws.map(t=>{
+        const color=CAT_COLORS[t.category]||'#898781';
+        return `<div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;padding:8px 16px;border-bottom:1px solid var(--gridline);">
+          <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;">${esc(t.date)}</span>
+          <span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(t.description)}">${esc(t.description)}</span>
+          <span style="font-size:10px;padding:2px 5px;border-radius:3px;background:${color}18;color:${color};white-space:nowrap;">${esc(t.category)}</span>
+          <span style="font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--critical);">${fmt(t.amount)}</span>
+        </div>`;
+      }).join('')+`<div style="padding:10px 16px;border-top:2px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;font-weight:600;color:var(--text-secondary);">Total Drawn</span>
+        <span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--critical);">${fmt(total)}</span>
+      </div>`;
+    }
+  }
+
+  // ── Dashboard reserve mini card ──
+  const dMini=document.getElementById('d-reserve-mini');
+  if(dMini){
+    const bal=D.reserveBalance||0;
+    const draws=reserveYearDraws();
+    const remaining=bal-draws;
+    if(!bal){
+      dMini.innerHTML=`<div class="empty"><div class="empty-icon">🏦</div>Set balance in Budget &amp; Income</div>`;
+    } else {
+      const remainColor=remaining<0?'var(--critical)':remaining<bal*0.2?'var(--warning)':'var(--good-text)';
+      dMini.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;justify-content:space-between;"><span style="font-size:12px;color:var(--text-muted);">Balance</span><span style="font-weight:700;font-variant-numeric:tabular-nums;">${fmt(bal)}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="font-size:12px;color:var(--text-muted);">Drawn this year 🪣</span><span style="font-weight:600;font-variant-numeric:tabular-nums;color:var(--cat-7);">${fmt(draws)}</span></div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:8px;"><span style="font-size:12px;font-weight:600;">Remaining</span><span style="font-weight:700;font-variant-numeric:tabular-nums;color:${remainColor};">${fmt(remaining)}</span></div>
+      </div>`;
+    }
+  }
 }
-function updSF(i,f,v){D.sinkingFunds[i][f]=f==='name'?v:+v;save();}
-function addSF(){D.sinkingFunds.push({id:uid(),name:'New Non-Monthly Expense',amount:0,months:12});save();}
-function delSF(i){D.sinkingFunds.splice(i,1);save();}
+function updSF(i,f,v){D.sinkingFunds[i][f]=f==='name'?v:+v;save();renderSinking();}
+function addSF(){D.sinkingFunds.push({id:uid(),name:'New Annual Expense',amount:0});save();renderSinking();}
+function delSF(i){D.sinkingFunds.splice(i,1);save();renderSinking();}
 
 /* ── Monthly Expenses (per-bucket) ── */
 const CC_BUCKETS=[
@@ -1590,7 +1659,6 @@ function renderSummary(){
 
   const income=tot.income();
   const budgeted=tot.exp();
-  const sink=tot.sinking();
   const net=tot.net();
   const txs=((D.months||{})[D.currentMonth]||{transactions:[]}).transactions||[];
   const actualSpend=txs.filter(t=>t.amount>0&&!t.isSinkingFund).reduce((s,t)=>s+t.amount,0);
@@ -1613,7 +1681,7 @@ function renderSummary(){
     }
   } else {
     if(net>=0){
-      statusMsg=`<strong>Budget looks good!</strong> Your plan has ${fmt(net)} left after all expenses and sinking funds.`;
+      statusMsg=`<strong>Budget looks good!</strong> Your plan has ${fmt(net)} left after all expenses.`;
       statusBg='rgba(12,163,12,.06)';statusEmoji='✅';
     } else {
       statusMsg=`<strong>Budget is stretched.</strong> You\'re over by ${fmt(Math.abs(net))} — check Budget &amp; Income to adjust.`;
@@ -1658,7 +1726,7 @@ function renderSummary(){
       <div class="kpi">
         <div class="kpi-label">Actual Spending</div>
         <div class="kpi-value" style="color:${actualSpendColor};">${hasActual?fmt(actualSpend):'—'}</div>
-        <div class="kpi-sub">Excl. sinking fund items</div>
+        <div class="kpi-sub">Excl. reserve fund draws</div>
       </div>
       <div class="kpi">
         <div class="kpi-label">Net Actual</div>
@@ -1754,11 +1822,10 @@ function renderSummary(){
 
   if(sumView==='overall'){
     if(hasActual){
-      const actualNet=income-actualSpend-sink;
+      const actualNet=income-actualSpend;
       const rows=[
         {label:'Monthly Income',note:'Fixed salary + extra income',budget:income,actual:income,neutral:true},
-        {label:'Monthly Expenses',note:'Excl. sinking fund items',budget:budgeted,actual:actualSpend,isExp:true},
-        {label:'Sinking Fund Set-Aside',note:'Pre-funded irregular expenses',budget:sink,actual:sink,neutral:true},
+        {label:'Monthly Expenses',note:'Excl. reserve fund draws',budget:budgeted,actual:actualSpend,isExp:true},
         {label:'Left Over',note:'',budget:net,actual:actualNet,isNet:true},
       ];
       let html=`<table class="tbl" style="font-size:14px;">
@@ -1782,7 +1849,7 @@ function renderSummary(){
         </tr>`;
       }
       html+='</tbody></table>';
-      if(sfSpend>0) html+=`<div style="margin-top:12px;padding:10px 14px;background:rgba(74,58,167,.07);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);">🪣 ${fmt(sfSpend)} in transactions marked as sinking fund — not counted in expenses above.</div>`;
+      if(sfSpend>0) html+=`<div style="margin-top:12px;padding:10px 14px;background:rgba(74,58,167,.07);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);">🪣 ${fmt(sfSpend)} in reserve fund draws this month — not counted in regular expenses above.</div>`;
       html+=`<details class="sum-details"><summary>📊 Category Breakdown (budgeted vs. actual)</summary><div style="margin-top:4px;">${catBreakdownHtml(cb,ca,'var(--cat-1)')}</div></details>`;
       contentEl.innerHTML=html;
     } else {
@@ -1792,7 +1859,6 @@ function renderSummary(){
         <tbody>
           <tr><td><div style="font-weight:500;">Monthly Income</div><div style="font-size:11px;color:var(--text-muted);">Fixed + extra this month</div></td><td style="text-align:right;font-variant-numeric:tabular-nums;">${fmt(income)}</td></tr>
           <tr><td><div style="font-weight:500;">Monthly Expenses</div></td><td style="text-align:right;font-variant-numeric:tabular-nums;">${fmt(budgeted)}</td></tr>
-          <tr><td><div style="font-weight:500;">Sinking Fund Set-Aside</div></td><td style="text-align:right;font-variant-numeric:tabular-nums;">${fmt(sink)}</td></tr>
           <tr class="tfoot-row"><td>Expected Left Over</td><td style="text-align:right;font-variant-numeric:tabular-nums;color:${net>=0?'var(--good-text)':'var(--critical)'};">${fmt(net)}</td></tr>
         </tbody>
       </table>`;
