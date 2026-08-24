@@ -214,7 +214,8 @@
     .addl-inc-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 6px;}
 
     /* Responsive */
-    @media(max-width:1000px){.bucket-cols{grid-template-columns:1fr 1fr;}}
+    @media(max-width:1000px){.bucket-cols{grid-template-columns:1fr 1fr;}.sum-bucket-grid{grid-template-columns:1fr 1fr;}}
+    .sum-bucket-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
     @media(max-width:900px){
       .grid-3{grid-template-columns:1fr 1fr;}
       .overall-hero{flex-direction:column;}
@@ -228,6 +229,7 @@
       .cc-sum-row{grid-template-columns:1fr 1fr;}
       .content{padding:14px;}
       .bucket-cols{grid-template-columns:1fr;}
+      .sum-bucket-grid{grid-template-columns:1fr;}
       .ostat-grid{grid-template-columns:1fr 1fr;}
     }
 
@@ -269,7 +271,8 @@
   <div class="tab active" data-tab="dashboard">📊 Dashboard</div>
   <div class="tab" data-tab="budget">💰 Budget &amp; Income</div>
   <div class="tab" data-tab="sinking">🪣 Sinking Funds</div>
-  <div class="tab" data-tab="cc">💳 Credit Card</div>
+  <div class="tab" data-tab="summary">📋 Summary</div>
+  <div class="tab" data-tab="cc">💳 Monthly Expenses</div>
 </nav>
 
 <main class="content">
@@ -399,9 +402,6 @@
       <label class="filter-label">
         <input type="checkbox" id="exp-sub-only" onchange="setExpFilter()" style="accent-color:var(--cat-4);"> 🔄 Subs only
       </label>
-      <label class="filter-label">
-        <input type="checkbox" id="exp-sink-only" onchange="setExpFilter()" style="accent-color:var(--cat-7);"> 🪣 Sinking only
-      </label>
       <button class="btn btn-ghost btn-sm" onclick="clearExpFilter()">Clear</button>
       <span class="filter-badge" id="filter-badge">Filtered</span>
     </div>
@@ -457,7 +457,6 @@
             <tr><td style="color:var(--text-secondary);padding-left:20px;">👔 Everett's Expenses</td><td style="text-align:right;" id="bs-everett">$0</td></tr>
             <tr><td style="color:var(--text-secondary);padding-left:20px;">👗 Rachel's Expenses</td><td style="text-align:right;" id="bs-rachel">$0</td></tr>
             <tr><td style="color:var(--text-secondary);padding-left:20px;">🔄 Subscriptions (included above)</td><td style="text-align:right;font-variant-numeric:tabular-nums;" id="bs-subs">$0</td></tr>
-            <tr><td style="color:var(--text-secondary);padding-left:20px;">🪣 Sinking Fund items (excluded — covered by SF)</td><td style="text-align:right;font-variant-numeric:tabular-nums;" id="bs-sinkexp">$0</td></tr>
             <tr><td style="color:var(--text-secondary);">Sinking Fund Monthly Target</td><td style="text-align:right;" id="bs-sink">$0</td></tr>
             <tr class="tfoot-row"><td>Net (Income − All Expenses − Sinking)</td><td style="text-align:right;" id="bs-net">$0</td></tr>
           </tbody>
@@ -484,7 +483,27 @@
     </div>
   </div>
 
-  <!-- ══ CREDIT CARD ══ -->
+  <!-- ══ SUMMARY ══ -->
+  <div class="tab-panel" id="panel-summary">
+    <div id="sum-status-card" class="mb"></div>
+
+    <div class="grid-3 mb" id="sum-kpis"></div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">📅 <span id="sum-month-label"></span></span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary btn-sm" id="sum-btn-overall" onclick="setSumView('overall')">Overall</button>
+          <button class="btn btn-ghost btn-sm" id="sum-btn-buckets" onclick="setSumView('buckets')">By Bucket</button>
+        </div>
+      </div>
+      <div class="card-body" id="sum-content">
+        <div class="empty"><div class="empty-icon">📋</div>Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MONTHLY EXPENSES ══ -->
   <div class="tab-panel" id="panel-cc">
     <div class="drop-zone" id="drop-zone" onclick="document.getElementById('csv-hidden').click()">
       <input type="file" id="csv-hidden" accept=".csv" onchange="handleFile(event)">
@@ -495,8 +514,8 @@
 
     <div id="cc-loaded" style="display:none;">
       <div class="cc-sum-row" style="margin-top:16px;">
-        <div class="cc-sum-tile"><div class="cc-sum-label">Total Charged</div><div class="cc-sum-val" id="cc-charged">$0</div></div>
-        <div class="cc-sum-tile"><div class="cc-sum-label">Transactions</div><div class="cc-sum-val" id="cc-count">0</div></div>
+        <div class="cc-sum-tile"><div class="cc-sum-label">Total Charged</div><div class="cc-sum-val" id="cc-charged">$0</div><div id="cc-sf-note" style="font-size:10px;color:var(--cat-7);margin-top:3px;min-height:14px;"></div></div>
+        <div class="cc-sum-tile"><div class="cc-sum-label">Actual Spending</div><div class="cc-sum-val good-c" id="cc-actual">$0</div><div style="font-size:10px;color:var(--text-muted);margin-top:3px;">excl. sinking fund</div></div>
         <div class="cc-sum-tile"><div class="cc-sum-label">Categories On Budget</div><div class="cc-sum-val good-c" id="cc-ok">—</div></div>
         <div class="cc-sum-tile"><div class="cc-sum-label">Categories Over Budget</div><div class="cc-sum-val bad-c" id="cc-over">—</div></div>
       </div>
@@ -517,7 +536,7 @@
         </div>
         <div style="overflow-x:auto;">
           <table class="tbl">
-            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th style="text-align:right;">Amount</th></tr></thead>
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th style="text-align:right;">Amount</th><th style="width:36px;text-align:center;" title="Mark as covered by sinking fund">🪣</th></tr></thead>
             <tbody id="cc-tbody"></tbody>
           </table>
         </div>
@@ -633,7 +652,7 @@ let saveTimer = null;
 let isRemoteUpdate = false;
 
 /* ── Filter state ── */
-let expFilter = {search:'', category:'', sort:'default', subsOnly:false, sinkOnly:false};
+let expFilter = {search:'', category:'', sort:'default', subsOnly:false};
 
 /* ── Sync status ── */
 function setSyncStatus(state){
@@ -722,18 +741,17 @@ const tot={
     return ai.reduce((s,r)=>s+(+r.amount||0),0);
   },
   income:()=>tot.baseIncome()+tot.additionalIncome(),
-  exp:()=>D.expenses.filter(e=>!e.isSinkingFund).reduce((s,r)=>s+(+r.budget||0),0),
-  sinkExp:()=>D.expenses.filter(e=>e.isSinkingFund).reduce((s,r)=>s+(+r.budget||0),0),
+  exp:()=>D.expenses.reduce((s,r)=>s+(+r.budget||0),0),
   sinking:()=>D.sinkingFunds.reduce((s,sf)=>s+sfMo(sf),0),
-  subs:()=>D.expenses.filter(e=>e.isSubscription&&!e.isSinkingFund).reduce((s,e)=>s+(+e.budget||0),0),
+  subs:()=>D.expenses.filter(e=>e.isSubscription).reduce((s,e)=>s+(+e.budget||0),0),
   net:()=>tot.income()-tot.exp()-tot.sinking(),
   rate:()=>{const i=tot.income();return i>0?tot.net()/i*100:0;}
 };
 function sfMo(sf){return(+sf.amount||0)/Math.max(1,+sf.months||12);}
-function catBudget(){const m={};for(const e of D.expenses.filter(e=>!e.isSinkingFund))m[e.category]=(m[e.category]||0)+(+e.budget||0);return m;}
+function catBudget(){const m={};for(const e of D.expenses)m[e.category]=(m[e.category]||0)+(+e.budget||0);return m;}
 function catActual(){
   const txs=((D.months||{})[D.currentMonth]||{transactions:[]}).transactions||[];
-  const m={};for(const t of txs)if(t.amount>0)m[t.category]=(m[t.category]||0)+t.amount;return m;
+  const m={};for(const t of txs)if(t.amount>0&&!t.isSinkingFund)m[t.category]=(m[t.category]||0)+t.amount;return m;
 }
 
 /* ── Format ── */
@@ -826,7 +844,7 @@ function renderCatChart(){
 function renderSubsDash(){
   const el=document.getElementById('d-sub-list');
   const totalEl=document.getElementById('d-sub-total');
-  const subs=D.expenses.filter(e=>e.isSubscription&&!e.isSinkingFund&&(+e.budget||0)>0);
+  const subs=D.expenses.filter(e=>e.isSubscription&&(+e.budget||0)>0);
   const total=tot.subs();
   totalEl.textContent=total>0?fmt(total)+'/mo':'';
   if(!subs.length){
@@ -919,34 +937,29 @@ function setExpFilter(){
   expFilter.category=document.getElementById('exp-cat-filter').value||'';
   expFilter.sort=document.getElementById('exp-sort').value||'default';
   expFilter.subsOnly=document.getElementById('exp-sub-only').checked||false;
-  expFilter.sinkOnly=document.getElementById('exp-sink-only').checked||false;
-  const hasFilter=expFilter.search||expFilter.category||expFilter.subsOnly||expFilter.sinkOnly||expFilter.sort!=='default';
+  const hasFilter=expFilter.search||expFilter.category||expFilter.subsOnly||expFilter.sort!=='default';
   document.getElementById('filter-badge').classList.toggle('show',!!hasFilter);
   renderBudget();
 }
 
 function clearExpFilter(){
-  expFilter={search:'',category:'',sort:'default',subsOnly:false,sinkOnly:false};
+  expFilter={search:'',category:'',sort:'default',subsOnly:false};
   document.getElementById('exp-search').value='';
   document.getElementById('exp-cat-filter').value='';
   document.getElementById('exp-sort').value='default';
   document.getElementById('exp-sub-only').checked=false;
-  document.getElementById('exp-sink-only').checked=false;
   document.getElementById('filter-badge').classList.remove('show');
   renderBudget();
 }
 
 /* ── Compact expense row (for bucket columns) ── */
 function expRowHtml(r,i){
-  const sinkBadge=r.isSinkingFund?`<span class="sink-badge">🪣 sinking</span>`:'';
   return `<tr class="bucket-exp-row">
     <td style="max-width:1px;width:100%;">
-      <div class="bucket-exp-name">${''}<input class="bare-input" style="font-size:13px;font-weight:500;" value="${esc(r.name)}" onchange="updExp(${i},'name',this.value)"></div>
+      <div class="bucket-exp-name"><input class="bare-input" style="font-size:13px;font-weight:500;" value="${esc(r.name)}" onchange="updExp(${i},'name',this.value)"></div>
       <div class="bucket-exp-meta">
         <select class="meta-sel" onchange="updExp(${i},'category',this.value)">${CATEGORIES.map(c=>`<option value="${c}"${r.category===c?' selected':''}>${c}</option>`).join('')}</select>
         <label class="flag-label" title="Recurring subscription"><input type="checkbox" class="sub-check" ${r.isSubscription?'checked':''} onchange="updExp(${i},'isSubscription',this.checked)"> 🔄</label>
-        <label class="flag-label" title="Already covered by a sinking fund — won't count against monthly income"><input type="checkbox" class="sink-check" ${r.isSinkingFund?'checked':''} onchange="updExp(${i},'isSinkingFund',this.checked)"> 🪣</label>
-        ${sinkBadge}
       </div>
     </td>
     <td style="text-align:right;width:88px;vertical-align:top;padding-top:11px;">
@@ -967,7 +980,6 @@ function renderBucket(bucket,bodyId,totalId){
     r.category.toLowerCase().includes(expFilter.search));
   if(expFilter.category) rows=rows.filter(({r})=>r.category===expFilter.category);
   if(expFilter.subsOnly) rows=rows.filter(({r})=>r.isSubscription);
-  if(expFilter.sinkOnly) rows=rows.filter(({r})=>r.isSinkingFund);
 
   // Apply sort
   if(expFilter.sort==='name-asc') rows.sort((a,b)=>a.r.name.localeCompare(b.r.name));
@@ -976,13 +988,13 @@ function renderBucket(bucket,bodyId,totalId){
   else if(expFilter.sort==='amount-asc') rows.sort((a,b)=>(+a.r.budget||0)-(+b.r.budget||0));
   else if(expFilter.sort==='category') rows.sort((a,b)=>a.r.category.localeCompare(b.r.category));
 
-  const hasFilter=expFilter.search||expFilter.category||expFilter.subsOnly||expFilter.sinkOnly;
+  const hasFilter=expFilter.search||expFilter.category||expFilter.subsOnly;
   document.getElementById(bodyId).innerHTML=rows.length
     ? rows.map(({r,i})=>expRowHtml(r,i)).join('')
     : `<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:14px 0;font-size:12px;">${hasFilter?'No expenses match the current filter':'No expenses yet — click ＋ below to add one'}</td></tr>`;
 
   // Total is always the full bucket total (unfiltered, excluding sinking fund items)
-  const total=D.expenses.filter(r=>(r.bucket||'Shared')===bucket&&!r.isSinkingFund).reduce((s,r)=>s+(+r.budget||0),0);
+  const total=D.expenses.filter(r=>(r.bucket||'Shared')===bucket).reduce((s,r)=>s+(+r.budget||0),0);
   document.getElementById(totalId).textContent=fmt(total);
   return total;
 }
@@ -1010,9 +1022,9 @@ function renderOverallHero(){
   }
 
   // Build donut slices
-  const sharedVal=D.expenses.filter(e=>(e.bucket||'Shared')==='Shared'&&!e.isSinkingFund).reduce((s,e)=>s+(+e.budget||0),0);
-  const everettVal=D.expenses.filter(e=>e.bucket==='Everett'&&!e.isSinkingFund).reduce((s,e)=>s+(+e.budget||0),0);
-  const rachelVal=D.expenses.filter(e=>e.bucket==='Rachel'&&!e.isSinkingFund).reduce((s,e)=>s+(+e.budget||0),0);
+  const sharedVal=D.expenses.filter(e=>(e.bucket||'Shared')==='Shared').reduce((s,e)=>s+(+e.budget||0),0);
+  const everettVal=D.expenses.filter(e=>e.bucket==='Everett').reduce((s,e)=>s+(+e.budget||0),0);
+  const rachelVal=D.expenses.filter(e=>e.bucket==='Rachel').reduce((s,e)=>s+(+e.budget||0),0);
   const savingsVal=Math.max(net,0);
 
   const allSlices=[
@@ -1155,7 +1167,6 @@ function renderBudget(){
   document.getElementById('bs-everett').textContent=fmt(everettTotal);
   document.getElementById('bs-rachel').textContent=fmt(rachelTotal);
   document.getElementById('bs-subs').textContent=fmt(tot.subs());
-  document.getElementById('bs-sinkexp').textContent=fmt(tot.sinkExp());
   document.getElementById('bs-sink').textContent=fmt(sink);
   const netEl=document.getElementById('bs-net');
   netEl.textContent=fmt(net);netEl.style.color=net>=0?'var(--good-text)':'var(--critical)';netEl.style.fontWeight='700';
@@ -1220,7 +1231,12 @@ function renderCC(){
   const charges=txs.filter(t=>t.amount>0);
   const total=charges.reduce((s,t)=>s+t.amount,0);
   document.getElementById('cc-charged').textContent=fmt(total);
-  document.getElementById('cc-count').textContent=charges.length;
+  const sfTotal=charges.filter(t=>t.isSinkingFund).reduce((s,t)=>s+t.amount,0);
+  const actualTotal=total-sfTotal;
+  const sfNote=document.getElementById('cc-sf-note');
+  if(sfNote) sfNote.textContent=sfTotal>0?fmt(sfTotal)+' sinking fund':'';
+  const actualEl=document.getElementById('cc-actual');
+  if(actualEl){actualEl.textContent=fmt(actualTotal);actualEl.style.color=actualTotal>tot.exp()?'var(--critical)':'var(--good-text)';}
   const cb=catBudget(),ca=catActual();
   const catsWithBudget=Object.keys(cb).filter(c=>cb[c]>0);
   document.getElementById('cc-ok').textContent=catsWithBudget.filter(c=>(ca[c]||0)<=cb[c]&&(ca[c]||0)>0).length+' / '+catsWithBudget.length;
@@ -1286,11 +1302,12 @@ function renderTxTable(){
   if(!filtered.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;">No transactions found</td></tr>';return;}
   tbody.innerHTML=filtered.map(tx=>{
     const color=CAT_COLORS[tx.category]||'#898781',isCredit=tx.amount<0;
-    return `<tr>
+    return `<tr style="${tx.isSinkingFund?'opacity:0.58;':''}">
       <td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">${esc(tx.date)}</td>
-      <td style="font-size:13px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(tx.description)}">${esc(tx.description)}</td>
+      <td style="font-size:13px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(tx.description)}">${esc(tx.description)}${tx.isSinkingFund?' <span style="font-size:10px;color:var(--cat-7);font-weight:700;">🪣 SF</span>':''}</td>
       <td><select class="sel" data-txid="${tx._id}" onchange="updateTxCat(this)" style="border-color:${color}30;background:${color}12;">${CATEGORIES.map(c=>`<option value="${c}"${tx.category===c?' selected':''}>${c}</option>`).join('')}</select></td>
       <td style="text-align:right;font-variant-numeric:tabular-nums;font-size:13px;color:${isCredit?'var(--good-text)':'var(--text-primary)'};">${isCredit?'+ ':' '}${fmt(Math.abs(tx.amount))}</td>
+      <td style="text-align:center;"><button style="background:none;border:none;cursor:pointer;font-size:16px;opacity:${tx.isSinkingFund?'1':'0.2'};transition:opacity .15s;padding:2px 4px;" title="${tx.isSinkingFund?'Unmark sinking fund':'Mark as covered by sinking fund'}" onclick="updateTxSF('${tx._id}',${!tx.isSinkingFund})">🪣</button></td>
     </tr>`;
   }).join('');
 }
@@ -1301,6 +1318,13 @@ function updateTxCat(sel){
   if(!month) return;
   const tx=month.transactions.find(t=>t._id===id);
   if(tx){tx.category=cat;save();renderCC();}
+}
+
+function updateTxSF(id,val){
+  const month=(D.months||{})[D.currentMonth];
+  if(!month) return;
+  const tx=month.transactions.find(t=>t._id===id);
+  if(tx){tx.isSinkingFund=!!val;save();renderCC();renderSummary();}
 }
 
 function clearCC(){
@@ -1393,8 +1417,167 @@ dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');ha
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
 
+/* ── Summary tab ── */
+let sumView='overall';
+
+function setSumView(v){
+  sumView=v;
+  const ob=document.getElementById('sum-btn-overall');
+  const bb=document.getElementById('sum-btn-buckets');
+  if(ob) ob.className='btn btn-'+(v==='overall'?'primary':'ghost')+' btn-sm';
+  if(bb) bb.className='btn btn-'+(v==='buckets'?'primary':'ghost')+' btn-sm';
+  renderSummary();
+}
+
+function renderSummary(){
+  const mlEl=document.getElementById('sum-month-label');
+  if(mlEl) mlEl.textContent=monthLabel(D.currentMonth);
+  const sc=document.getElementById('sum-status-card');
+  if(!sc) return;
+
+  const income=tot.income();
+  const budgeted=tot.exp();
+  const sink=tot.sinking();
+  const net=tot.net();
+  const txs=((D.months||{})[D.currentMonth]||{transactions:[]}).transactions||[];
+  const actualSpend=txs.filter(t=>t.amount>0&&!t.isSinkingFund).reduce((s,t)=>s+t.amount,0);
+  const sfSpend=txs.filter(t=>t.amount>0&&t.isSinkingFund).reduce((s,t)=>s+t.amount,0);
+  const hasActual=actualSpend>0||sfSpend>0;
+
+  // Status card
+  let statusMsg,statusBg,statusEmoji;
+  if(!income){
+    statusMsg='<strong>Set up your income</strong> in the Budget &amp; Income tab to get started.';
+    statusBg='var(--surface-hover)';statusEmoji='💡';
+  } else if(hasActual){
+    const over=actualSpend>budgeted;
+    if(over){
+      statusMsg=`<strong>You\'re over budget</strong> by ${fmt(actualSpend-budgeted)} in actual spending so far this month.`;
+      statusBg='rgba(208,59,59,.07)';statusEmoji='🚨';
+    } else {
+      statusMsg=`<strong>You\'re on track!</strong> ${fmt(budgeted-actualSpend)} left to spend against your ${fmt(budgeted)} budget.`;
+      statusBg='rgba(12,163,12,.06)';statusEmoji='✅';
+    }
+  } else {
+    if(net>=0){
+      statusMsg=`<strong>Budget looks good!</strong> Your plan has ${fmt(net)} left after all expenses and sinking funds.`;
+      statusBg='rgba(12,163,12,.06)';statusEmoji='✅';
+    } else {
+      statusMsg=`<strong>Budget is stretched.</strong> You\'re over by ${fmt(Math.abs(net))} — check Budget &amp; Income to adjust.`;
+      statusBg='rgba(250,178,25,.08)';statusEmoji='⚠️';
+    }
+  }
+  sc.innerHTML=`<div style="padding:22px 24px;background:${statusBg};border:1px solid var(--border);border-radius:var(--radius);display:flex;gap:16px;align-items:flex-start;">
+    <span style="font-size:32px;line-height:1;">${statusEmoji}</span>
+    <div>
+      <div style="font-size:16px;line-height:1.5;">${statusMsg}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:5px;">${monthLabel(D.currentMonth)}</div>
+    </div>
+  </div>`;
+
+  // KPI tiles
+  const kpiEl=document.getElementById('sum-kpis');
+  if(kpiEl){
+    const mainVal=hasActual?actualSpend:net;
+    const mainLabel=hasActual?'Actual Spending':'Net After Budget';
+    const mainSub=hasActual?'excl. sinking fund items':'income − expenses − sinking';
+    const mainColor=hasActual?(actualSpend>budgeted?'var(--critical)':'var(--good-text)'):(net>=0?'var(--good-text)':'var(--critical)');
+    kpiEl.innerHTML=`
+      <div class="kpi">
+        <div class="kpi-label">Monthly Income</div>
+        <div class="kpi-value">${fmt(income)}</div>
+        <div class="kpi-sub">Fixed + extra this month</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Budgeted Expenses</div>
+        <div class="kpi-value">${fmt(budgeted)}</div>
+        <div class="kpi-sub">What we planned to spend</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">${mainLabel}</div>
+        <div class="kpi-value" style="color:${mainColor};">${fmt(mainVal)}</div>
+        <div class="kpi-sub">${mainSub}</div>
+      </div>`;
+  }
+
+  // Main content card
+  const contentEl=document.getElementById('sum-content');
+  if(!contentEl) return;
+
+  if(sumView==='overall'){
+    if(hasActual){
+      const actualNet=income-actualSpend-sink;
+      const rows=[
+        {label:'Monthly Income',note:'Fixed salary + extra income',budget:income,actual:income,neutral:true},
+        {label:'Monthly Expenses',note:'Excl. sinking fund items',budget:budgeted,actual:actualSpend,isExp:true},
+        {label:'Sinking Fund Set-Aside',note:'Pre-funded irregular expenses',budget:sink,actual:sink,neutral:true},
+        {label:'Left Over',note:'',budget:net,actual:actualNet,isNet:true},
+      ];
+      let html=`<table class="tbl" style="font-size:14px;">
+        <thead><tr><th></th><th style="text-align:right;width:120px;">Budgeted</th><th style="text-align:right;width:120px;">Actual</th><th style="text-align:right;width:110px;">Difference</th></tr></thead>
+        <tbody>`;
+      for(const row of rows){
+        const diff=row.actual-row.budget;
+        let diffColor='var(--text-muted)',diffText='—';
+        if(!row.neutral){
+          if(row.isExp){diffColor=diff<=0?'var(--good-text)':'var(--critical)';diffText=(diff<0?'':'+')+(diff===0?'—':fmt(diff));}
+          else if(row.isNet){diffColor=diff>=0?'var(--good-text)':'var(--critical)';diffText=(diff>=0?'+':'')+fmt(diff);}
+        }
+        html+=`<tr${row.isNet?' class="tfoot-row"':''}>
+          <td>
+            <div style="font-weight:${row.isNet?'700':'500'};">${row.label}</div>
+            ${row.note?`<div style="font-size:11px;color:var(--text-muted);">${row.note}</div>`:''}
+          </td>
+          <td style="text-align:right;font-variant-numeric:tabular-nums;">${fmt(row.budget)}</td>
+          <td style="text-align:right;font-variant-numeric:tabular-nums;">${fmt(row.actual)}</td>
+          <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:${diffColor};">${diffText}</td>
+        </tr>`;
+      }
+      html+='</tbody></table>';
+      if(sfSpend>0) html+=`<div style="margin-top:12px;padding:10px 14px;background:rgba(74,58,167,.07);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary);">🪣 ${fmt(sfSpend)} in transactions marked as sinking fund — not counted in expenses above.</div>`;
+      contentEl.innerHTML=html;
+    } else {
+      contentEl.innerHTML=`<div style="text-align:center;padding:10px 0 16px;font-size:13px;color:var(--text-muted);">No spending imported yet for ${monthLabel(D.currentMonth)}. Use the Monthly Expenses tab to import your statement and see actuals here.</div>
+      <table class="tbl" style="font-size:14px;">
+        <thead><tr><th></th><th style="text-align:right;">Budgeted</th></tr></thead>
+        <tbody>
+          <tr><td><div style="font-weight:500;">Monthly Income</div><div style="font-size:11px;color:var(--text-muted);">Fixed + extra this month</div></td><td style="text-align:right;font-variant-numeric:tabular-nums;">${fmt(income)}</td></tr>
+          <tr><td><div style="font-weight:500;">Monthly Expenses</div></td><td style="text-align:right;font-variant-numeric:tabular-nums;">${fmt(budgeted)}</td></tr>
+          <tr><td><div style="font-weight:500;">Sinking Fund Set-Aside</div></td><td style="text-align:right;font-variant-numeric:tabular-nums;">${fmt(sink)}</td></tr>
+          <tr class="tfoot-row"><td>Expected Left Over</td><td style="text-align:right;font-variant-numeric:tabular-nums;color:${net>=0?'var(--good-text)':'var(--critical)'};">${fmt(net)}</td></tr>
+        </tbody>
+      </table>`;
+    }
+  } else {
+    // By bucket view
+    const buckets=[
+      {name:'Shared',icon:'🏠',color:'#2a78d6'},
+      {name:'Everett',icon:'👔',color:'#eb6834'},
+      {name:'Rachel',icon:'👗',color:'#1baf7a'},
+    ];
+    const totalExp=budgeted||1;
+    let html='<div class="sum-bucket-grid">';
+    for(const b of buckets){
+      const bExp=D.expenses.filter(e=>(e.bucket||'Shared')===b.name).reduce((s,e)=>s+(+e.budget||0),0);
+      const pct=Math.round(bExp/totalExp*100);
+      html+=`<div style="background:var(--surface-hover);border-radius:var(--radius);padding:22px;border:1px solid color-mix(in srgb,${b.color} 20%,var(--border));">
+        <div style="font-size:28px;margin-bottom:8px;">${b.icon}</div>
+        <div style="font-size:17px;font-weight:700;color:${b.color};margin-bottom:14px;">${b.name}</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:4px;">Budgeted This Month</div>
+        <div style="font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;margin-bottom:4px;">${fmt(bExp)}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">${pct}% of total expenses</div>
+        <div style="height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${b.color};border-radius:99px;"></div>
+        </div>
+      </div>`;
+    }
+    html+='</div>';
+    contentEl.innerHTML=html;
+  }
+}
+
 function renderAll(){
-  renderDashboard(); renderBudget(); renderSinking(); renderCC();
+  renderDashboard(); renderBudget(); renderSinking(); renderCC(); renderSummary();
 }
 
 /* ── Start ── */
