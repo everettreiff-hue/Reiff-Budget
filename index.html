@@ -2252,12 +2252,14 @@ async function initPlaidLink(receivedRedirectUri = null) {
         try {
           const exchangeFn = fns().httpsCallable('exchangePublicToken');
           const instName = metadata.institution?.name || 'American Express';
-          await exchangeFn({ public_token, institution_name: instName });
+          const bucket = window._plaidPendingBucket || 'Shared';
+          window._plaidPendingBucket = null;
+          await exchangeFn({ public_token, institution_name: instName, defaultBucket: bucket });
           // Remember connected account name locally for status display
           try {
             const accts = JSON.parse(sessionStorage.getItem('plaid_accounts') || '[]');
             if (!accts.find(a => a.name === instName)) {
-              accts.push({ name: instName });
+              accts.push({ name: instName, bucket });
               sessionStorage.setItem('plaid_accounts', JSON.stringify(accts));
             }
           } catch(e) {}
@@ -2285,6 +2287,51 @@ async function initPlaidLink(receivedRedirectUri = null) {
 }
 
 async function openPlaidLink() {
+  // Ask who this account belongs to before launching Plaid
+  const bucket = await new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px 24px;width:300px;text-align:center;">
+        <div style="font-size:18px;font-weight:700;margin-bottom:8px;">Who owns this account?</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Transactions will be filed under this person's budget.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button onclick="this.closest('div[style*=inset]').remove();arguments[0].resolve('Everett')"
+            style="padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-hover);cursor:pointer;font-size:14px;font-weight:600;">
+            👔 Everett
+          </button>
+          <button onclick="this.closest('div[style*=inset]').remove();arguments[0].resolve('Rachel')"
+            style="padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-hover);cursor:pointer;font-size:14px;font-weight:600;">
+            👗 Rachel
+          </button>
+          <button onclick="this.closest('div[style*=inset]').remove();arguments[0].resolve('Shared')"
+            style="padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--surface-hover);cursor:pointer;font-size:14px;font-weight:600;">
+            🏠 Shared (Checking)
+          </button>
+          <button onclick="this.closest('div[style*=inset]').remove();arguments[0].resolve(null)"
+            style="padding:8px;border:none;background:none;cursor:pointer;font-size:12px;color:var(--text-muted);">Cancel</button>
+        </div>
+      </div>`;
+    // Pass resolve into onclick via closure
+    overlay.querySelectorAll('button').forEach(btn => {
+      const orig = btn.getAttribute('onclick');
+      btn.removeAttribute('onclick');
+      btn.addEventListener('click', () => {
+        overlay.remove();
+        if (orig.includes('Everett')) resolve('Everett');
+        else if (orig.includes('Rachel')) resolve('Rachel');
+        else if (orig.includes('Shared')) resolve('Shared');
+        else resolve(null);
+      });
+    });
+    document.body.appendChild(overlay);
+  });
+
+  if (!bucket) return; // user cancelled
+
+  // Store bucket for use in onSuccess
+  window._plaidPendingBucket = bucket;
+
   if (!plaidHandler) {
     const ok = await initPlaidLink();
     if (!ok) return;
