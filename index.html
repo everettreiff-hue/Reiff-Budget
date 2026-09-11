@@ -2107,7 +2107,9 @@ function addAutoRule(){
 function updateRule(i,field,val){
   if(!D.autoRules||!D.autoRules[i]) return;
   D.autoRules[i][field]=val;
+  const updated=applyRulesToAllMonths();
   save();
+  if(updated>0){renderCC();renderSummary();renderRachelView();toast(`✅ Rule saved — ${updated} transaction${updated!==1?'s':''} updated`);}
 }
 function deleteRule(i){
   if(!D.autoRules) return;
@@ -2126,6 +2128,24 @@ function applyAutoRules(txs){
     }
     return tx;
   });
+}
+function applyRulesToAllMonths(){
+  const rules=(D.autoRules||[]).filter(r=>r.keyword&&r.keyword.trim());
+  if(!rules.length) return 0;
+  let count=0;
+  for(const mk of Object.keys(D.months||{})){
+    const txs=(D.months[mk].transactions||[]);
+    txs.forEach((tx,i)=>{
+      const desc=(tx.description||'').toLowerCase();
+      for(const r of rules){
+        if(desc.includes(r.keyword.toLowerCase())){
+          if(txs[i].category!==r.category){txs[i]={...txs[i],category:r.category};count++;}
+          break;
+        }
+      }
+    });
+  }
+  return count;
 }
 
 /* ── Reserve Fund ── */
